@@ -31,6 +31,10 @@ rm .greenlyt/STOP
 GREENLYT_DISABLED=1 assert_exit 0 gl_killed
 
 assert_exit 2 "$GL_BIN" nope
+assert_exit 1 "$GL_BIN" killed
+touch .greenlyt/STOP
+assert_exit 0 "$GL_BIN" killed
+rm .greenlyt/STOP
 assert_eq docs/greenlyt "$("$GL_BIN" config .docsDir)" "config CLI: default"
 assert_eq 3 "$("$GL_BIN" config .maxAttempts)" "config CLI: override"
 

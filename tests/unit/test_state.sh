@@ -36,10 +36,17 @@ assert_contains garbage "$(gl_running_runs 2>&1 >/dev/null)" "warning on stderr"
 assert_eq "$run_id" "$("$GL_BIN" state find ajout-export 2>/dev/null)" "find returns the waiting run"
 assert_exit 1 "$GL_BIN" state find unknown
 
+"$GL_BIN" state set-status "$run_id" stalled
+assert_eq "$run_id" "$("$GL_BIN" state find ajout-export 2>/dev/null)" "find returns a stalled run"
+"$GL_BIN" state set-status "$run_id" waiting
 "$GL_BIN" state rebudget "$run_id"
 assert_eq 0 "$("$GL_BIN" state get "$run_id" .attempt)" "rebudget resets the counter"
 assert_eq "[2,2]" "$("$GL_BIN" state get "$run_id" .budgets)" "rebudget records the budget"
 assert_eq running "$("$GL_BIN" state get "$run_id" .status)" "rebudget restarts the run"
 assert_eq "$run_id" "$(gl_running_runs 2>/dev/null)" "the run is running again"
+
+assert_eq "$run_id" "$("$GL_BIN" state find ajout-export 2>/dev/null)" "find returns a running run"
+"$GL_BIN" state set-status "$run_id" aborted
+assert_exit 1 "$GL_BIN" state find ajout-export
 
 finish

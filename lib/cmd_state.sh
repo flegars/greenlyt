@@ -33,14 +33,14 @@ state_init() {
     --argjson max "$max" \
     '{runId: $runId, slug: $slug, spec: $spec, branch: $branch, baseBranch: $base,
       status: "running", attempt: 0, maxAttempts: $max, budgets: [$max],
-      lastBlockedAttempt: -1, tests: {exitCode: null, tail: ""}, verdict: null, history: []}' \
+      lastBlockedAttempt: -1, sessionId: null, tests: {exitCode: null, tail: ""}, verdict: null, history: []}' \
     > "$dir/$run_id.json"
   printf '%s\n' "$run_id"
 }
 
 state_set_status() {
   case " $GL_STATUSES " in
-    *" $2 "*) gl_state_update "$1" '.status = $s' --arg s "$2" ;;
+    *" $2 "*) gl_state_update "$1" '.status = $s | if $s == "running" then .sessionId = null else . end' --arg s "$2" ;;
     *) gl_die "invalid status: $2 (expected: $GL_STATUSES)" ;;
   esac
 }
@@ -60,12 +60,12 @@ state_next_attempt() {
 
 state_find() {
   local found
-  found="$( { gl_state_ids_with_status waiting; gl_state_ids_with_status failed; } \
+  found="$( { local status; for status in running stalled waiting failed; do gl_state_ids_with_status "$status"; done; } \
     | grep -E -- "^[0-9]{8}-[0-9]{6}-$1\$" | sort | tail -n 1)"
   [ -n "$found" ] || return 1
   printf '%s\n' "$found"
 }
 
 state_rebudget() {
-  gl_state_update "$1" '.attempt = 0 | .budgets += [.maxAttempts] | .lastBlockedAttempt = -1 | .status = "running"'
+  gl_state_update "$1" '.attempt = 0 | .budgets += [.maxAttempts] | .lastBlockedAttempt = -1 | .sessionId = null | .status = "running"'
 }

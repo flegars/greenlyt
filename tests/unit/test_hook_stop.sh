@@ -5,7 +5,7 @@ HOOK="$GL_PLUGIN_ROOT/hooks/stop.sh"
 
 run_hook() {
   local rc=0
-  HOOK_OUT="$(printf '{"cwd":"%s","stop_hook_active":%s}' "$1" "$2" | bash "$HOOK" 2>/dev/null)" || rc=$?
+  HOOK_OUT="$(printf '{"cwd":"%s","stop_hook_active":%s,"session_id":"%s"}' "$1" "$2" "${3:-session-a}" | bash "$HOOK" 2>/dev/null)" || rc=$?
   HOOK_RC=$rc
 }
 
@@ -49,7 +49,26 @@ assert_eq block "$(printf '%s' "$HOOK_OUT" | jq -r .decision)" "stop_hook_active
 
 (cd "$repo" && "$GL_BIN" state next-attempt "$run_id" >/dev/null)
 run_hook "$repo" false
-assert_eq "" "$HOOK_OUT" "cap reached: lets Claude stop"
+assert_eq block "$(printf '%s' "$HOOK_OUT" | jq -r .decision)" "cap reached while running: blocks once to finalize"
+assert_contains "failure report" "$(printf '%s' "$HOOK_OUT" | jq -r .reason)" "cap reached: the reason asks for the failure step"
+run_hook "$repo" true
+assert_eq "" "$HOOK_OUT" "cap reached, woken again without progress: lets Claude stop"
+assert_eq stalled "$(status_of "$repo" "$run_id")" "cap reached, no progress: stalled"
+
+repo="$(mk_repo)"
+write_config "$repo" '{}'
+run_id="$(new_run "$repo" session)"
+run_hook "$repo" false session-a
+assert_eq block "$(printf '%s' "$HOOK_OUT" | jq -r .decision)" "unclaimed run: the first session claims it"
+assert_eq session-a "$(cd "$repo" && "$GL_BIN" state get "$run_id" .sessionId)" "the claiming session is recorded"
+run_hook "$repo" false session-b
+assert_eq 0 "$HOOK_RC" "other session: exit 0"
+assert_eq "" "$HOOK_OUT" "other session: transparent"
+assert_eq running "$(status_of "$repo" "$run_id")" "other session: run untouched"
+(cd "$repo" && "$GL_BIN" state set-status "$run_id" running)
+assert_eq "" "$(cd "$repo" && "$GL_BIN" state get "$run_id" .sessionId)" "set-status running releases the session"
+run_hook "$repo" false session-b
+assert_eq block "$(printf '%s' "$HOOK_OUT" | jq -r .decision)" "a resumed run is claimed by the new session"
 
 repo="$(mk_repo)"
 write_config "$repo" '{}'

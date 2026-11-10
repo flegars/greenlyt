@@ -9,6 +9,7 @@ source "$GL_LIB/state.sh"
 input="$(cat)"
 cwd="$(printf '%s' "$input" | jq -r '.cwd // empty' 2>/dev/null)"
 active="$(printf '%s' "$input" | jq -r '.stop_hook_active // false' 2>/dev/null)"
+session="$(printf '%s' "$input" | jq -r '.session_id // empty' 2>/dev/null)"
 
 [ -n "$cwd" ] && cd "$cwd" 2>/dev/null || exit 0
 gl_root >/dev/null || exit 0
@@ -27,11 +28,13 @@ if gl_killed; then
   exit 0
 fi
 
+owner="$(gl_state_get "$run_id" .sessionId)" || exit 0
+# A run belongs to the session that runs the loop: never block another session in the same repo.
+[ -n "$owner" ] && [ -n "$session" ] && [ "$owner" != "$session" ] && exit 0
+
 attempt="$(gl_state_get "$run_id" .attempt)" || exit 0
 max="$(gl_state_get "$run_id" .maxAttempts)" || exit 0
 last="$(gl_state_get "$run_id" .lastBlockedAttempt)" || exit 0
-
-[ "$attempt" -ge "$max" ] && exit 0
 
 if [ "$active" = "true" ] && [ "$attempt" = "$last" ]; then
   gl_state_update "$run_id" '.status = "stalled"'
@@ -39,6 +42,11 @@ if [ "$active" = "true" ] && [ "$attempt" = "$last" ]; then
   exit 0
 fi
 
-gl_state_update "$run_id" '.lastBlockedAttempt = .attempt' || exit 0
-jq -n --arg reason "greenlyt run $run_id in progress (round $attempt/$max): continue the run skill where you left off." \
-  '{decision: "block", reason: $reason}'
+gl_state_update "$run_id" '.lastBlockedAttempt = .attempt | .sessionId = (if $s == "" then .sessionId else $s end)' \
+  --arg s "$session" || exit 0
+if [ "$attempt" -ge "$max" ]; then
+  reason="greenlyt run $run_id has used its $max rounds: finish step 4 of the run skill (failure report, status failed) before stopping."
+else
+  reason="greenlyt run $run_id in progress (round $attempt/$max): continue the run skill where you left off."
+fi
+jq -n --arg reason "$reason" '{decision: "block", reason: $reason}'

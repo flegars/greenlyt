@@ -32,9 +32,10 @@ state_init() {
     --arg branch "$(gl_config_get .branchPrefix)$slug" \
     --arg base "$(gl_config_get .forge.baseBranch)" \
     --argjson max "$max" \
+    --arg configHash "$(git hash-object "$(gl_config_file)" 2>/dev/null)" \
     '{runId: $runId, slug: $slug, spec: $spec, branch: $branch, baseBranch: $base,
       status: "running", attempt: 0, maxAttempts: $max, budgets: [$max],
-      lastBlockedAttempt: -1, sessionId: null, tddWarnings: [], lockedTests: {}, refactor: null, tests: {exitCode: null, tail: ""}, verdict: null, history: []}' \
+      lastBlockedAttempt: -1, sessionId: null, configHash: (if $configHash == "" then null else $configHash end), tddWarnings: [], lockedTests: {}, refactor: null, tests: {exitCode: null, tail: ""}, verdict: null, history: []}' \
     > "$dir/$run_id.json"
   printf '%s\n' "$run_id"
 }

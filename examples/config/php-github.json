@@ -1,0 +1,9 @@
+{
+  "docsDir": "docs/greenlyt",
+  "testCommand": "vendor/bin/phpunit",
+  "maxAttempts": 5,
+  "protectedBranches": ["main", "master", "develop"],
+  "branchPrefix": "greenlyt/",
+  "deviations": "ask",
+  "forge": { "type": "github", "remote": "origin", "baseBranch": "main" }
+}

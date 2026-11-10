@@ -1,0 +1,19 @@
+name: Release check
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  versions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cohérence tag, manifestes et CHANGELOG
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          plugin="$(jq -r .version .claude-plugin/plugin.json)"
+          market="$(jq -r '.plugins[] | select(.name == "greenlyt") | .version' .claude-plugin/marketplace.json)"
+          echo "tag=$tag plugin.json=$plugin marketplace.json=$market"
+          [ "$tag" = "$plugin" ] && [ "$tag" = "$market" ] || { echo "versions incohérentes" >&2; exit 1; }
+          grep -q "^## \[$tag\]" CHANGELOG.md || { echo "section ## [$tag] absente du CHANGELOG" >&2; exit 1; }

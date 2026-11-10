@@ -1,0 +1,6 @@
+{
+  "testCommand": "npm test",
+  "maxAttempts": 3,
+  "deviations": "report",
+  "forge": { "type": "github", "remote": "origin", "baseBranch": "main" }
+}

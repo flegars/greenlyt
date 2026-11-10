@@ -1,0 +1,16 @@
+{
+  "docsDir": "docs/greenlyt",
+  "testCommand": "vendor/bin/phpunit",
+  "maxAttempts": 5,
+  "protectedBranches": ["main", "master", "develop"],
+  "branchPrefix": "greenlyt/",
+  "deviations": "ask",
+  "forge": {
+    "type": "azure-devops",
+    "remote": "origin",
+    "baseBranch": "develop",
+    "organization": "https://dev.azure.com/mon-organisation",
+    "project": "mon-projet",
+    "repository": "mon-repo"
+  }
+}

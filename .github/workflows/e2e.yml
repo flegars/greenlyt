@@ -1,0 +1,31 @@
+name: E2E
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * *"
+
+jobs:
+  e2e:
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture: [js, php-phpunit]
+        scenario: [success, budget]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          tools: composer
+      - name: Installer Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+      - name: Scénario ${{ matrix.scenario }} sur ${{ matrix.fixture }}
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: bash tests/e2e/run.sh ${{ matrix.fixture }} ${{ matrix.scenario }}

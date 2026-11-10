@@ -1,0 +1,6 @@
+{
+  "testCommand": "vendor/bin/phpunit",
+  "maxAttempts": 3,
+  "deviations": "report",
+  "forge": { "type": "github", "remote": "origin", "baseBranch": "main" }
+}

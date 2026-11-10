@@ -19,6 +19,7 @@ Read the diff (`git diff <baseBranch>...HEAD`, `git diff`, `git status --porcela
 - **Public contracts** changed: signatures of public methods, routes, CLI options, event or message payloads, database schema, config keys, serialized formats. Out of scope → `major`.
 - **Behavior changes** in code paths the spec does not cover: changed defaults, error handling, ordering, side effects.
 - **Removed code** that is still referenced (use `grep` across the repository).
+- **Test harness changes** that could hide failures: test runner config (`phpunit.xml*`, `jest.config.*`, `vitest.config.*`, `package.json` test scripts, `.mocharc*`…), bootstrap files, shared fixtures or helpers used by existing tests, exclusion patterns, lowered coverage thresholds. Any such change the spec does not ask for is `critical`.
 
 A behavior change that the spec asks for is not a regression.
 

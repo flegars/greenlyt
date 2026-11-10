@@ -44,11 +44,11 @@ On every round:
 
 1. the `test-writer` writes the tests for every acceptance criterion (round 1, then only when a reviewer asks for missing coverage); the CLI **locks** them and checks that they fail before any implementation;
 2. the `implementer` makes them pass, taking the previous round's blocking objections into account;
-3. the CLI checks that no locked test was changed (a change is a critical objection) and **actually runs** the test command (`testCommand`): its exit code is the only one that counts;
+3. the CLI checks that no locked test and no greenlyt config was changed (a change is a critical objection) and **actually runs** the test command (`testCommand`): its exit code is the only one that counts;
 4. the four reviewers run **in parallel** and each returns a JSON verdict; the CLI merges them and approves the round only if the tests are green, every expected reviewer answered and no `critical` or `major` objection is left;
 5. the round is committed on the work branch `greenlyt/<slug>`.
 
-- **Success**: the `refactorer` simplifies the code once, then tests and reviewers run again. If anything breaks, the CLI reverts to the green commit and the green version is kept. Any deviations are then submitted to you (accept or fix), the branch is pushed and a **draft pull request** is opened. Its description contains the spec, the AC → evidence table, the rounds per reviewer, the accepted deviations, the non-blocking remarks and the refactoring outcome.
+- **Success**: the `refactorer` simplifies the code once, then tests and reviewers run again. If anything breaks, the CLI reverts to the green commit (leftovers are stashed, never deleted) and the green version is kept. Any deviations are then submitted to you (accept or fix), the branch is pushed and a **draft pull request** is opened. Its description contains the spec, the AC → evidence table, the rounds per reviewer, the accepted deviations, the non-blocking remarks and the refactoring outcome.
 - **Budget exhausted**: no push, no pull request. A failure report lists the red tests, the unresolved objections per reviewer and **open questions** to refocus the spec. Update the spec with `/greenlyt:spec <slug>`, then run `/greenlyt:run <slug>` again: the run resumes on the same branch with a fresh budget.
 
 `/greenlyt:run` refuses to start if the working tree is not clean, if the spec is not approved, or if the test suite is already red on the base branch. The work branch is created from the local base branch, which must contain the committed `.greenlyt/config.json`.

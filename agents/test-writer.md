@@ -32,4 +32,8 @@ A short summary:
 | AC-1 | test_multiplies_two_integers | tests/CalculatorTest.php | method multiply() does not exist |
 ### Already green (proves nothing)
 - <none | test and why>
+### Files to lock
+- <every test, fixture or helper file you created or changed, one path per line, relative to the repository root>
 ```
+
+The loop locks exactly the files you list under "Files to lock": list all of them, and nothing else.

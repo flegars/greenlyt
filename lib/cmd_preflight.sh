@@ -21,6 +21,11 @@ cmd_preflight() {
 
   gl_has_config || preflight_fail 10 "no config: run /greenlyt:init"
   [ -n "$(gl_config_get .testCommand)" ] || preflight_fail 10 "testCommand missing from .greenlyt/config.json"
+  local known unknown
+  known="$(cd "$GL_LIB/../agents" && ls -- *-reviewer.md | sed 's/-reviewer\.md$//' | jq -R . | jq -s -c .)"
+  unknown="$(jq -r --argjson known "$known" 'if type == "array" and length > 0 then (. - $known | join(", ")) else "<reviewers must be a non-empty array>" end' \
+    <<< "$(gl_config_get .reviewers null)")"
+  [ -z "$unknown" ] || preflight_fail 10 "unknown reviewers in .greenlyt/config.json: $unknown (known: $(jq -r 'join(", ")' <<< "$known"))"
   gl_killed && preflight_fail 11 "kill switch is on (.greenlyt/STOP or GREENLYT_DISABLED=1)"
   [ -f "$spec" ] && grep -Eq '^Status[[:space:]]*:[[:space:]]*approved[[:space:]]*$' "$spec" \
     || preflight_fail 12 "spec $spec does not exist or is not approved (Status: approved)"

@@ -26,6 +26,11 @@ rm .greenlyt/STOP
 
 write_config "$repo" '{}'
 assert_exit 10 "$GL_BIN" preflight "$SPEC"
+write_config "$repo" '{"testCommand":"exit 0","reviewers":["spec","performance"]}'
+assert_exit 10 "$GL_BIN" preflight "$SPEC"
+assert_contains performance "$("$GL_BIN" preflight "$SPEC" 2>&1)" "an unknown reviewer is named"
+write_config "$repo" '{"testCommand":"exit 0","reviewers":null}'
+assert_exit 10 "$GL_BIN" preflight "$SPEC"
 write_config "$repo" '{"testCommand":"exit 0"}'
 
 sed -i.bak 's/approved/draft/' "$SPEC" && rm "$SPEC.bak"

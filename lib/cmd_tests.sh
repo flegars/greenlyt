@@ -29,16 +29,22 @@ tests_lock() {
 }
 
 tests_check() {
-  local file hash broken=0
+  local file hash problems=()
   while IFS=$'\t' read -r file hash; do
     [ -n "$file" ] || continue
     if [ ! -f "$file" ]; then
-      printf 'greenlyt: locked test deleted: %s\n' "$file" >&2
-      broken=1
+      problems+=("locked test deleted: $file")
     elif [ "$(git hash-object "$file")" != "$hash" ]; then
-      printf 'greenlyt: locked test modified: %s\n' "$file" >&2
-      broken=1
+      problems+=("locked test modified: $file")
     fi
   done <<< "$(gl_state_get "$1" '.lockedTests // {} | to_entries | map("\(.key)\t\(.value)") | join("\n")')"
-  return "$broken"
+  # The verdict is always written so that the loop can pass it to `greenlyt verdict` unconditionally.
+  printf '%s\n' "${problems[@]+"${problems[@]}"}" \
+    | jq -R -s '{reviewer: "locked-tests",
+        objections: (split("\n") | map(select(length > 0)) | map({ref: "locked-tests", severity: "critical",
+          detail: (. + ": the developer may not change tests written by the test writer")})),
+        deviations: [], specIssues: []}' > "$(gl_state_dir)/$1.verdict.locked-tests"
+  [ "${#problems[@]}" -eq 0 ] && return 0
+  printf 'greenlyt: %s\n' "${problems[@]}" >&2
+  return 1
 }

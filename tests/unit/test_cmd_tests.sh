@@ -21,9 +21,15 @@ assert_exit 0 "$GL_BIN" tests check "$run_id"
 echo "implementation" > src/Export.php
 assert_exit 0 "$GL_BIN" tests check "$run_id"
 
+verdict=".greenlyt/state/$run_id.verdict.locked-tests"
+assert_eq '{"reviewer":"locked-tests","objections":[],"deviations":[],"specIssues":[]}' "$(jq -c . "$verdict")" "check writes an empty verdict when nothing changed"
+
 echo "weakened" > tests/ExportTest.php
 assert_exit 1 "$GL_BIN" tests check "$run_id"
 assert_contains "tests/ExportTest.php" "$("$GL_BIN" tests check "$run_id" 2>&1)" "a modified locked file is named"
+assert_eq critical "$(jq -r '.objections[0].severity' "$verdict")" "a modified locked test is a critical objection"
+assert_contains "tests/ExportTest.php" "$(jq -r '.objections[0].detail' "$verdict")" "the objection names the file"
+assert_exit 0 "$GL_BIN" verdict "$run_id" "$verdict"
 echo "new test" > tests/ExportTest.php
 
 git add -A && git commit -q -m "round 1"

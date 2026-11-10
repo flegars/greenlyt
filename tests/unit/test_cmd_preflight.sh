@@ -68,6 +68,34 @@ git remote add origin "$remote"
 git push -q origin main
 git commit -q --allow-empty -m "unpushed local commit"
 run_id="$("$GL_BIN" preflight "$SPEC")"
-assert_eq "$(git -C "$remote" rev-parse main)" "$(git rev-parse HEAD~1)" "branch starts from origin/main"
+assert_eq "$(git rev-parse main)" "$(git rev-parse HEAD~1)" "branch starts from the local base branch, unpushed commits included"
+
+remote="$(mktemp -d)"
+git init -q --bare "$remote"
+repo="$(mk_repo)"
+cd "$repo"
+git remote add origin "$remote"
+git push -q origin main
+write_config "$repo" '{"testCommand":"exit 0"}'
+printf '.greenlyt/state/\n' > .gitignore
+git add -A && git commit -q -m "config committed but not pushed"
+mkdir -p docs/greenlyt/specs
+printf '# Export\n\nStatus: approved\n' > "$SPEC"
+run_id="$("$GL_BIN" preflight "$SPEC")"
+assert_eq greenlyt/export-csv "$(git branch --show-current)" "unpushed config: work branch created"
+assert_eq .greenlyt/config.json "$(git ls-files .greenlyt/config.json)" "unpushed config: config tracked on the work branch"
+assert_eq running "$("$GL_BIN" state get "$run_id" .status)" "unpushed config: run initialized"
+
+repo="$(mk_repo)"
+cd "$repo"
+git checkout -q -b feature
+write_config "$repo" '{"testCommand":"exit 0"}'
+printf '.greenlyt/state/\n' > .gitignore
+git add -A && git commit -q -m "config only on feature"
+mkdir -p docs/greenlyt/specs
+printf '# Export\n\nStatus: approved\n' > "$SPEC"
+assert_exit 17 "$GL_BIN" preflight "$SPEC"
+assert_eq feature "$(git branch --show-current)" "config missing on base: back on the starting branch"
+assert_exit 1 git rev-parse --verify --quiet greenlyt/export-csv
 
 finish

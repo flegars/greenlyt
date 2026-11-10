@@ -7,6 +7,12 @@ preflight_fail() {
   exit "$1"
 }
 
+preflight_rollback() {
+  git reset -q
+  git checkout -q "$1"
+  git branch -q -D "$2"
+}
+
 cmd_preflight() {
   [ $# -eq 1 ] || gl_die "usage: greenlyt preflight <spec-path>"
   local spec=$1 root slug branch base remote start previous command
@@ -30,21 +36,28 @@ cmd_preflight() {
     && preflight_fail 16 "branch $branch already exists: resume the run or delete the branch"
 
   start="$base"
-  if git remote get-url "$remote" >/dev/null 2>&1 && git fetch -q "$remote" "$base" 2>/dev/null; then
+  if ! git rev-parse --verify --quiet "refs/heads/$base" >/dev/null; then
+    git fetch -q "$remote" "$base" 2>/dev/null || true
     start="$remote/$base"
   fi
   previous="$(git branch --show-current)"
-  git checkout -q -b "$branch" "$start"
+  git checkout -q -b "$branch" "$start" || preflight_fail 16 "cannot create branch $branch from $start"
+
+  if ! gl_has_config || [ -z "$(gl_config_get .testCommand)" ] || [ ! -f "$spec" ]; then
+    preflight_rollback "$previous" "$branch"
+    preflight_fail 17 "the config or the spec is missing from $start: commit .greenlyt/config.json on $base"
+  fi
 
   command="$(gl_config_get .testCommand)"
   if ! bash -c "$command" >/dev/null 2>&1; then
-    git checkout -q "$previous"
-    git branch -q -D "$branch"
+    preflight_rollback "$previous" "$branch"
     preflight_fail 15 "the test suite already fails on $start: fix it before running greenlyt"
   fi
 
-  git add -- "$spec"
-  git diff --cached --quiet || git commit -q -m "docs(greenlyt): spec $slug"
+  git add -- "$spec" && { git diff --cached --quiet || git commit -q -m "docs(greenlyt): spec $slug"; } || {
+    preflight_rollback "$previous" "$branch"
+    gl_die "cannot commit the spec $spec"
+  }
   source "$GL_LIB/cmd_state.sh"
   state_init "$slug"
 }

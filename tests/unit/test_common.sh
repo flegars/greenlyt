@@ -8,6 +8,8 @@ cd "$repo"
 assert_eq 5 "$(gl_config_get .maxAttempts)" "default maxAttempts"
 assert_eq docs/greenlyt "$(gl_config_get .docsDir)" "default docsDir"
 assert_eq main "$(gl_config_get .forge.baseBranch)" "default baseBranch"
+assert_eq '["spec","architecture","security","regression"]' "$(gl_config_get .reviewers)" "default reviewers"
+assert_eq true "$(gl_config_get .refactor)" "refactoring on by default"
 assert_exit 1 gl_has_config
 
 write_config "$repo" '{"maxAttempts":3,"forge":{"type":"github"}}'

@@ -7,8 +7,10 @@ GL_TEMPLATES="$GL_LIB/../skills/run/templates"
 gl_render() {
   local template=$1 run_id=$2 extra=${3:-'{}'}
   jq -n -r --rawfile tpl "$template" --slurpfile s "$(gl_state_file "$run_id")" \
-    --arg date "$(date '+%Y-%m-%d %H:%M')" --argjson extra "$extra" '
+    --arg date "$(date '+%Y-%m-%d %H:%M')" --argjson extra "$extra" \
+    --argjson reviewers "$(gl_config_get .reviewers)" --arg refactorEnabled "$(gl_config_get .refactor)" '
     def bullets(f): if length == 0 then "_None._" else map("- " + f) | join("\n") end;
+    def objection: "**\(.ref)** (\(.severity), \(.reviewer)): \(.detail)";
     $s[0] as $st
     | ($st.verdict // {objections: [], deviations: [], specIssues: []}) as $v
     | {
@@ -17,12 +19,23 @@ gl_render() {
         maxAttempts: ($st.maxAttempts | tostring), date: $date,
         exitCode: ($st.tests.exitCode | tostring), testsTail: $st.tests.tail,
         history: (if ($st.history | length) == 0 then "_No rounds._" else
-          (["| Round | Tests | Reviewer | Objections | Deviations |", "|---|---|---|---|---|"]
-           + ($st.history | map("| \(.attempt) | \(if .exitCode == 0 then "green" else "red (\(.exitCode))" end) | \(if .approved then "approved" else "rejected" end) | \(.objections) | \(.deviations) |"))
+          (["| Round | Tests | " + ($reviewers | join(" | ")) + " | Minor | Deviations |",
+            "|---|---|" + ($reviewers | map("---|") | join("")) + "---|---|"]
+           + ($st.history | map(. as $h
+               | "| \($h.attempt) | \(if $h.exitCode == 0 then "green" else "red (\($h.exitCode))" end) | "
+                 + ($reviewers | map(($h.blocking[.] // "-") | tostring) | join(" | "))
+                 + " | \($h.minor) | \($h.deviations) |"))
           | join("\n")) end),
-        objections: ($v.objections | bullets("**\(.ref)** : \(.detail)")),
+        objections: ([$v.objections[] | select(.severity != "minor")] | bullets(objection)),
+        remarks: ([$v.objections[] | select(.severity == "minor")] | bullets(objection)),
         deviations: ($v.deviations | bullets("\(.description) — files: \(.files | join(", ")) — rationale: \(.rationale)")),
-        specIssues: ($v.specIssues | bullets("\(.question) _(\(.why))_"))
+        specIssues: ($v.specIssues | bullets("\(.question) _(\(.why))_")),
+        tddWarnings: (($st.tddWarnings // []) | bullets(.)),
+        refactoring: (if $refactorEnabled != "true" then "Disabled in the config."
+          elif $st.refactor == null then "Not run."
+          elif $st.refactor.status == "applied" then "Applied after the green round, tests and reviews still green."
+          elif $st.refactor.status == "reverted" then "Attempted, then reverted to the green commit `\($st.refactor.greenCommit[0:7])`: \($st.refactor.reason // "it broke tests or reviews")."
+          else "In progress." end)
       } + $extra
     | to_entries
     | reduce .[] as $e ($tpl; split("{{" + $e.key + "}}") | join($e.value))'

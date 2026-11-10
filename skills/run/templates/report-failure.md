@@ -16,9 +16,17 @@ No pull request was opened. The local branch is kept for inspection.
 
 {{objections}}
 
+## Non-blocking remarks
+
+{{remarks}}
+
 ## Deviations found
 
 {{deviations}}
+
+## TDD warnings
+
+{{tddWarnings}}
 
 ## Open questions
 

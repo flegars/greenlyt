@@ -14,6 +14,18 @@
 
 {{deviations}}
 
+## Non-blocking remarks
+
+{{remarks}}
+
+## Refactoring
+
+{{refactoring}}
+
+## TDD warnings
+
+{{tddWarnings}}
+
 ## Last test run (exit code {{exitCode}})
 
 ```

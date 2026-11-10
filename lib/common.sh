@@ -6,6 +6,8 @@ GL_DEFAULT_CONFIG='{
   "protectedBranches": ["main", "master", "develop"],
   "branchPrefix": "greenlyt/",
   "deviations": "ask",
+  "reviewers": ["spec", "architecture", "security", "regression"],
+  "refactor": true,
   "forge": {"type": "github", "remote": "origin", "baseBranch": "main"}
 }'
 

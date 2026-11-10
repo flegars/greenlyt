@@ -3,17 +3,37 @@
 source "$GL_LIB/state.sh"
 
 cmd_verdict() {
-  [ $# -eq 2 ] || gl_die "usage: greenlyt verdict <run-id> <json-file>"
-  local run_id=$1 file=$2
-  jq -e '(.approved | type == "boolean")
-    and (.objections | type == "array")
-    and (.deviations | type == "array")
-    and (.specIssues | type == "array")' "$file" >/dev/null 2>&1 \
-    || gl_die "invalid verdict: expected {approved: bool, objections: [], deviations: [], specIssues: []}"
-  gl_state_update "$run_id" \
-    '.verdict = $v | .history += [{attempt: .attempt, exitCode: .tests.exitCode, approved: $v.approved,
-      objections: ($v.objections | length), deviations: ($v.deviations | length)}]' \
-    --argjson v "$(jq -c . "$file")"
+  [ $# -ge 2 ] || gl_die "usage: greenlyt verdict <run-id> <verdict-file>..."
+  local run_id=$1 file merged
+  shift
+  for file in "$@"; do
+    jq -e '(.reviewer | type == "string")
+      and (.objections | type == "array")
+      and all(.objections[]; (.severity | IN("critical", "major", "minor")) and (.ref | type == "string"))
+      and (.deviations | type == "array")
+      and (.specIssues | type == "array")' "$file" >/dev/null 2>&1 \
+      || gl_die "invalid verdict $file: expected {reviewer, objections: [{ref, severity: critical|major|minor, detail}], deviations: [], specIssues: []}"
+  done
+  merged="$(jq -s -c --argjson expected "$(gl_config_get .reviewers)" '
+    {
+      reviews: .,
+      objections: (map(.reviewer as $r | .objections[] | . + {reviewer: $r})),
+      deviations: (map(.deviations[])),
+      specIssues: (map(.specIssues[])),
+      missing: ($expected - map(.reviewer))
+    }
+    | .blocking = ([.objections[] | select(.severity != "minor")] | length)' "$@")"
+  gl_state_update "$run_id" '
+    .verdict = ($v | .approved = (.blocking == 0 and (.missing | length) == 0 and $exit == 0))
+    | .history += [{
+        attempt: .attempt,
+        exitCode: .tests.exitCode,
+        approved: .verdict.approved,
+        blocking: (reduce $v.reviews[] as $r ({}; .[$r.reviewer] = ([$r.objections[] | select(.severity != "minor")] | length))),
+        minor: ([$v.objections[] | select(.severity == "minor")] | length),
+        deviations: ($v.deviations | length)
+      }]' \
+    --argjson v "$merged" --argjson exit "$(gl_state_get "$run_id" '.tests.exitCode // -1')"
 }
 
 cmd_decide() {

@@ -3,7 +3,7 @@
 source "$GL_LIB/state.sh"
 
 cmd_state() {
-  [ $# -ge 2 ] || gl_die "usage: greenlyt state <init|get|set-status|next-attempt|find|rebudget> <arg> [...]"
+  [ $# -ge 2 ] || gl_die "usage: greenlyt state <init|get|set-status|next-attempt|find|rebudget|tdd-warning> <arg> [...]"
   local sub=$1
   shift
   case "$sub" in
@@ -13,6 +13,7 @@ cmd_state() {
     next-attempt) state_next_attempt "$1" ;;
     find) state_find "$1" ;;
     rebudget) state_rebudget "$1" ;;
+    tdd-warning) gl_state_update "$1" '.tddWarnings += [$m]' --arg m "${2:?usage: greenlyt state tdd-warning <run-id> <message>}" ;;
     *) gl_die "unknown state subcommand: $sub" ;;
   esac
 }
@@ -33,7 +34,7 @@ state_init() {
     --argjson max "$max" \
     '{runId: $runId, slug: $slug, spec: $spec, branch: $branch, baseBranch: $base,
       status: "running", attempt: 0, maxAttempts: $max, budgets: [$max],
-      lastBlockedAttempt: -1, sessionId: null, tests: {exitCode: null, tail: ""}, verdict: null, history: []}' \
+      lastBlockedAttempt: -1, sessionId: null, tddWarnings: [], lockedTests: {}, refactor: null, tests: {exitCode: null, tail: ""}, verdict: null, history: []}' \
     > "$dir/$run_id.json"
   printf '%s\n' "$run_id"
 }

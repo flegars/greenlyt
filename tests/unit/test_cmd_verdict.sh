@@ -36,11 +36,13 @@ assert_eq exhausted "$("$GL_BIN" decide "$run_id")" "rouge sans budget : exhaust
 
 git checkout -q -b greenlyt/verdict
 echo change > fichier.txt
+mkdir -p docs/greenlyt/runs && echo rapport > docs/greenlyt/runs/echec.md
 "$GL_BIN" test "$run_id" >/dev/null || true
 assert_exit 0 "$GL_BIN" commit-tour "$run_id"
 assert_eq "chore(greenlyt): tour 2" "$(git log -1 --format=%s)" "message du commit de tour"
 assert_eq "" "$(git ls-files .greenlyt/state)" "l'état n'est jamais commité"
 assert_eq "" "$(git status --porcelain -- fichier.txt)" "les changements sont commités"
+assert_eq "" "$(git ls-files docs/greenlyt/runs)" "les rapports ne partent pas dans les commits de tour"
 assert_exit 0 "$GL_BIN" commit-tour "$run_id"
 
 finish

@@ -24,5 +24,7 @@ rm .greenlyt/STOP
 GREENLYT_DISABLED=1 assert_exit 0 gl_killed
 
 assert_exit 2 "$GL_BIN" nope
+assert_eq docs/greenlyt "$("$GL_BIN" config .docsDir)" "CLI config : défaut"
+assert_eq 3 "$("$GL_BIN" config .maxAttempts)" "CLI config : surcharge"
 
 finish

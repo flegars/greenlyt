@@ -7,7 +7,7 @@ cmd_commit_tour() {
   local attempt
   attempt="$(gl_state_get "$1" .attempt)"
   cd "$(gl_root)"
-  git add -A -- . ':(exclude).greenlyt/state'
+  git add -A -- . ':(exclude).greenlyt/state' ":(exclude)$(gl_config_get .docsDir)/runs"
   if git diff --cached --quiet; then
     echo "greenlyt: rien à commiter pour le tour $attempt"
     return 0

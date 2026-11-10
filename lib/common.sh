@@ -36,11 +36,13 @@ gl_config_json() {
   fi
 }
 
+gl_jq_value() {
+  printf '(%s) as $v | if $v == null then empty elif ($v | type) == "array" or ($v | type) == "object" then ($v | tojson) else ($v | tostring) end' "$1"
+}
+
 gl_config_get() {
   local value
-  value="$(gl_config_json | jq -c "$1 // empty")" || return 1
-  value="${value#\"}"
-  value="${value%\"}"
+  value="$(gl_config_json | jq -r "$(gl_jq_value "$1")")" || return 1
   if [ -z "$value" ]; then
     printf '%s' "${2:-}"
   else

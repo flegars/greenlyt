@@ -32,12 +32,10 @@ gl_running_runs() {
 }
 
 gl_state_get() {
-  local file value
+  local file
   file="$(gl_state_file "$1")"
   [ -f "$file" ] || gl_die "run not found: $1"
-  value="$(jq -c "$2" "$file")"
-  value="${value#\"}"
-  printf '%s' "${value%\"}"
+  jq -r "$(gl_jq_value "$2")" "$file"
 }
 
 gl_state_update() {

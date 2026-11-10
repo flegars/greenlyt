@@ -23,6 +23,8 @@ assert_eq 2 "$("$GL_BIN" state next-attempt "$run_id")" "2nd attempt"
 assert_exit 3 "$GL_BIN" state next-attempt "$run_id"
 assert_eq 2 "$("$GL_BIN" state get "$run_id" .attempt)" "the cap is not exceeded"
 
+jq '.tests.tail = "say \"hi\"\\n"' ".greenlyt/state/$run_id.json" > tmp.json && mv tmp.json ".greenlyt/state/$run_id.json"
+assert_eq 'say "hi"\n' "$("$GL_BIN" state get "$run_id" .tests.tail)" "state strings are unescaped"
 assert_exit 1 "$GL_BIN" state set-status "$run_id" bogus
 assert_exit 0 "$GL_BIN" state set-status "$run_id" waiting
 assert_eq waiting "$("$GL_BIN" state get "$run_id" .status)" "waiting status"

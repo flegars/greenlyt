@@ -2,9 +2,20 @@
   "docsDir": "docs/greenlyt",
   "testCommand": "npm test",
   "maxAttempts": 5,
-  "protectedBranches": ["main", "master", "develop"],
+  "protectedBranches": [
+    "main",
+    "master",
+    "develop"
+  ],
   "branchPrefix": "greenlyt/",
   "deviations": "ask",
+  "reviewers": [
+    "spec",
+    "architecture",
+    "security",
+    "regression"
+  ],
+  "refactor": true,
   "forge": {
     "type": "azure-devops",
     "remote": "origin",

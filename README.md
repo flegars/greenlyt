@@ -3,8 +3,8 @@
 A Claude Code plugin that takes a need all the way to a **draft pull request ready for review**:
 
 1. a spec is written, then approved by you;
-2. a developer agent implements it, an independent reviewer agent challenges it;
-3. the loop runs until **the tests are green and the reviewer approves**;
+2. a test writer agent writes the failing tests, a developer agent makes them pass, and four independent reviewer agents (spec, architecture, security, non-regression) challenge the result;
+3. the loop runs until **the tests are green and no reviewer has a blocking objection**, then a refactoring agent simplifies the code without changing its behavior;
 4. any deviation from the spec is reported to you before the pull request is opened.
 
 ## Installation
@@ -24,17 +24,32 @@ A Claude Code plugin that takes a need all the way to a **draft pull request rea
 
 Specs and reports are written to `docs/greenlyt/` (configurable with `docsDir`).
 
+## Agents
+
+| Agent | Role | Writes |
+|---|---|---|
+| `test-writer` | Writes the failing tests that prove each acceptance criterion, **before** any implementation (TDD) | tests only |
+| `implementer` | Makes those tests pass; may not change them | production code |
+| `spec-reviewer` | Spec conformance, acceptance criteria coverage, deviations, ambiguities in the spec | nothing |
+| `architecture-reviewer` | The project's own architecture: layers, patterns, file placement, dependencies | nothing |
+| `security-reviewer` | Injection, secrets, authentication and authorization, input validation, risky dependencies | nothing |
+| `regression-reviewer` | Existing tests deleted or weakened, public contracts changed, behavior changed out of scope | nothing |
+| `refactorer` | Simplifies the change once it is approved, with identical behavior | production code |
+
+Reviewers grade each objection `critical`, `major` or `minor`. Only `critical` and `major` objections send the loop into another round; `minor` ones are listed in the pull request as non-blocking remarks.
+
 ## What the loop does
 
 On every round:
 
-1. the `implementer` agent implements the spec and writes the tests, taking the previous round's objections into account;
-2. the plugin's CLI **actually runs** the test command (`testCommand`): its exit code is the only one that counts;
-3. the read-only `reviewer` agent returns a JSON verdict: `approved`, `objections`, `deviations` (liberties taken outside the spec), `specIssues` (ambiguities in the spec);
-4. the round is committed on the work branch `greenlyt/<slug>`.
+1. the `test-writer` writes the tests for every acceptance criterion (round 1, then only when a reviewer asks for missing coverage); the CLI **locks** them and checks that they fail before any implementation;
+2. the `implementer` makes them pass, taking the previous round's blocking objections into account;
+3. the CLI checks that no locked test was changed (a change is a critical objection) and **actually runs** the test command (`testCommand`): its exit code is the only one that counts;
+4. the four reviewers run **in parallel** and each returns a JSON verdict; the CLI merges them and approves the round only if the tests are green, every expected reviewer answered and no `critical` or `major` objection is left;
+5. the round is committed on the work branch `greenlyt/<slug>`.
 
-- **Success** (green tests + reviewer approval): any deviations are submitted to you (accept or fix), then the branch is pushed and a **draft pull request** is opened. Its description contains the spec, the AC → evidence table, the rounds and the accepted deviations.
-- **Budget exhausted**: no push, no pull request. A failure report lists the red tests, the unresolved objections and **open questions** to refocus the spec. Update the spec with `/greenlyt:spec <slug>`, then run `/greenlyt:run <slug>` again: the run resumes on the same branch with a fresh budget.
+- **Success**: the `refactorer` simplifies the code once, then tests and reviewers run again. If anything breaks, the CLI reverts to the green commit and the green version is kept. Any deviations are then submitted to you (accept or fix), the branch is pushed and a **draft pull request** is opened. Its description contains the spec, the AC → evidence table, the rounds per reviewer, the accepted deviations, the non-blocking remarks and the refactoring outcome.
+- **Budget exhausted**: no push, no pull request. A failure report lists the red tests, the unresolved objections per reviewer and **open questions** to refocus the spec. Update the spec with `/greenlyt:spec <slug>`, then run `/greenlyt:run <slug>` again: the run resumes on the same branch with a fresh budget.
 
 `/greenlyt:run` refuses to start if the working tree is not clean, if the spec is not approved, or if the test suite is already red on the base branch. The work branch is created from the local base branch, which must contain the committed `.greenlyt/config.json`.
 
@@ -54,6 +69,8 @@ An interrupted run (crash, closed terminal) is resumed by running `/greenlyt:run
 | `protectedBranches` | `["main","master","develop"]` | Branches on which commit, push, `reset --hard` and rebase are blocked |
 | `branchPrefix` | `greenlyt/` | Prefix of the work branch |
 | `deviations` | `ask` | `ask`: stop and let you decide on deviations; `report`: only list them in the pull request |
+| `reviewers` | `["spec","architecture","security","regression"]` | Reviewers that must approve every round; remove one to skip it |
+| `refactor` | `true` | Run the refactoring agent once the change is approved |
 | `forge.type` | `github` | `github` (with `gh`) or `azure-devops` (with `az repos`) |
 | `forge.remote` | `origin` | Git remote to push to |
 | `forge.baseBranch` | `main` | Starting branch and pull request target |

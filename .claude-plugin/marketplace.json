@@ -7,7 +7,7 @@
     {
       "name": "greenlyt",
       "source": "./",
-      "description": "Specify, then iterate with a developer agent and a reviewer agent until tests are green and the review is approved, and open a draft pull request.",
+      "description": "Specify, then iterate with a test writer, a developer and specialized reviewers (spec, architecture, security, non-regression) until tests are green and no blocking objection is left, refactor safely, and open a draft pull request.",
       "version": "0.1.0"
     }
   ]

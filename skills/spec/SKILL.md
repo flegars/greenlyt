@@ -6,7 +6,7 @@ argument-hint: "\"<need in plain text>\" | <existing slug>"
 
 # /greenlyt:spec
 
-Produces the spec that will be the loop's **fixed reference**: the developer implements it, the reviewer uses it to judge and to spot deviations. A vague spec makes a loop that never converges: precision here is the priority.
+Produces the spec that will be the loop's **fixed reference**: the test writer derives the tests from it, the developer implements it, and the reviewers use it to judge and to spot deviations. A vague spec makes a loop that never converges: precision here is the priority.
 
 ## 1. Preconditions
 
@@ -31,7 +31,7 @@ Ask the questions needed to remove ambiguity, **one at a time**, starting with t
 Fill in `templates/spec.md` (in this skill's folder). Requirements:
 
 - Each criterion is numbered `AC-n` and phrased so that it **can be verified by an automated test** (input, action, observable result).
-- The **out of scope** section is explicit: it is what lets the reviewer qualify a deviation.
+- The **out of scope** section is explicit: it is what lets the reviewers qualify a deviation or a regression.
 - No blocking open question remains at approval.
 - The `Status: draft` line stays as is until the user approves.
 

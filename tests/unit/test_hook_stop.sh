@@ -19,79 +19,79 @@ new_run() {
 
 repo="$(mk_repo)"
 run_hook "$repo" false
-assert_eq 0 "$HOOK_RC" "sans config : code 0"
-assert_eq "" "$HOOK_OUT" "sans config : transparent"
+assert_eq 0 "$HOOK_RC" "no config: exit 0"
+assert_eq "" "$HOOK_OUT" "no config: transparent"
 
 write_config "$repo" '{"maxAttempts":3}'
 run_hook "$repo" false
-assert_eq "" "$HOOK_OUT" "aucun run : transparent"
+assert_eq "" "$HOOK_OUT" "no run: transparent"
 
 run_id="$(new_run "$repo" feature)"
 (cd "$repo" && "$GL_BIN" state next-attempt "$run_id" >/dev/null)
 run_hook "$repo" false
-assert_eq 0 "$HOOK_RC" "cas nominal : code 0"
-assert_eq block "$(printf '%s' "$HOOK_OUT" | jq -r .decision)" "cas nominal : bloque"
-assert_contains "$run_id" "$(printf '%s' "$HOOK_OUT" | jq -r .reason)" "la raison nomme le run"
-assert_eq 1 "$(cd "$repo" && "$GL_BIN" state get "$run_id" .lastBlockedAttempt)" "lastBlockedAttempt mis à jour"
+assert_eq 0 "$HOOK_RC" "nominal case: exit 0"
+assert_eq block "$(printf '%s' "$HOOK_OUT" | jq -r .decision)" "nominal case: blocks"
+assert_contains "$run_id" "$(printf '%s' "$HOOK_OUT" | jq -r .reason)" "the reason names the run"
+assert_eq 1 "$(cd "$repo" && "$GL_BIN" state get "$run_id" .lastBlockedAttempt)" "lastBlockedAttempt updated"
 
 run_hook "$repo" true
-assert_eq "" "$HOOK_OUT" "stop_hook_active sans progrès : laisse s'arrêter"
-assert_eq stalled "$(status_of "$repo" "$run_id")" "stop_hook_active sans progrès : stalled"
+assert_eq "" "$HOOK_OUT" "stop_hook_active without progress: lets Claude stop"
+assert_eq stalled "$(status_of "$repo" "$run_id")" "stop_hook_active without progress: stalled"
 
 repo="$(mk_repo)"
 write_config "$repo" '{"maxAttempts":3}'
-run_id="$(new_run "$repo" progres)"
+run_id="$(new_run "$repo" progress)"
 (cd "$repo" && "$GL_BIN" state next-attempt "$run_id" >/dev/null)
 run_hook "$repo" false
 (cd "$repo" && "$GL_BIN" state next-attempt "$run_id" >/dev/null)
 run_hook "$repo" true
-assert_eq block "$(printf '%s' "$HOOK_OUT" | jq -r .decision)" "stop_hook_active avec progrès : bloque"
+assert_eq block "$(printf '%s' "$HOOK_OUT" | jq -r .decision)" "stop_hook_active with progress: blocks"
 
 (cd "$repo" && "$GL_BIN" state next-attempt "$run_id" >/dev/null)
 run_hook "$repo" false
-assert_eq "" "$HOOK_OUT" "plafond atteint : laisse s'arrêter"
+assert_eq "" "$HOOK_OUT" "cap reached: lets Claude stop"
 
 repo="$(mk_repo)"
 write_config "$repo" '{}'
-run_id="$(new_run "$repo" stop-fichier)"
+run_id="$(new_run "$repo" stop-file)"
 touch "$repo/.greenlyt/STOP"
 run_hook "$repo" false
-assert_eq "" "$HOOK_OUT" "kill switch fichier : laisse s'arrêter"
-assert_eq aborted "$(status_of "$repo" "$run_id")" "kill switch fichier : aborted"
+assert_eq "" "$HOOK_OUT" "file kill switch: lets Claude stop"
+assert_eq aborted "$(status_of "$repo" "$run_id")" "file kill switch: aborted"
 
 repo="$(mk_repo)"
 write_config "$repo" '{}'
 run_id="$(new_run "$repo" stop-env)"
 HOOK_OUT="$(printf '{"cwd":"%s","stop_hook_active":false}' "$repo" | GREENLYT_DISABLED=1 bash "$HOOK" 2>/dev/null)"
-assert_eq "" "$HOOK_OUT" "kill switch env : laisse s'arrêter"
-assert_eq aborted "$(status_of "$repo" "$run_id")" "kill switch env : aborted"
+assert_eq "" "$HOOK_OUT" "env kill switch: lets Claude stop"
+assert_eq aborted "$(status_of "$repo" "$run_id")" "env kill switch: aborted"
 
 repo="$(mk_repo)"
 write_config "$repo" '{}'
-new_run "$repo" un >/dev/null
+new_run "$repo" one >/dev/null
 sleep 1
-new_run "$repo" deux >/dev/null
+new_run "$repo" two >/dev/null
 run_hook "$repo" false
-assert_eq 0 "$HOOK_RC" "deux runs : code 0"
-assert_eq "" "$HOOK_OUT" "deux runs : laisse s'arrêter"
+assert_eq 0 "$HOOK_RC" "two runs: exit 0"
+assert_eq "" "$HOOK_OUT" "two runs: lets Claude stop"
 
 repo="$(mk_repo)"
 write_config "$repo" '{}'
 mkdir -p "$repo/.greenlyt/state"
-printf '{' > "$repo/.greenlyt/state/casse.json"
+printf '{' > "$repo/.greenlyt/state/broken.json"
 run_hook "$repo" false
-assert_eq 0 "$HOOK_RC" "JSON corrompu : code 0"
-assert_eq "" "$HOOK_OUT" "JSON corrompu : laisse s'arrêter"
+assert_eq 0 "$HOOK_RC" "corrupt JSON: exit 0"
+assert_eq "" "$HOOK_OUT" "corrupt JSON: lets Claude stop"
 
 run_hook /nonexistent false
-assert_eq 0 "$HOOK_RC" "cwd invalide : code 0"
-assert_eq "" "$HOOK_OUT" "cwd invalide : transparent"
+assert_eq 0 "$HOOK_RC" "invalid cwd: exit 0"
+assert_eq "" "$HOOK_OUT" "invalid cwd: transparent"
 
 repo="$(mk_repo)"
 write_config "$repo" '{}'
-run_id="$(new_run "$repo" attente)"
+run_id="$(new_run "$repo" waiting-run)"
 (cd "$repo" && "$GL_BIN" state set-status "$run_id" waiting)
 run_hook "$repo" false
-assert_eq "" "$HOOK_OUT" "run waiting : laisse s'arrêter"
+assert_eq "" "$HOOK_OUT" "waiting run: lets Claude stop"
 
 finish

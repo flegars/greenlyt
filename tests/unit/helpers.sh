@@ -28,20 +28,20 @@ _fail() {
 }
 
 assert_eq() {
-  [ "$1" = "$2" ] || _fail "$3 (attendu: [$1], obtenu: [$2])"
+  [ "$1" = "$2" ] || _fail "$3 (expected: [$1], got: [$2])"
 }
 
 assert_exit() {
   local expected=$1 rc=0
   shift
   "$@" >/dev/null 2>&1 || rc=$?
-  [ "$rc" -eq "$expected" ] || _fail "code $rc au lieu de $expected : $*"
+  [ "$rc" -eq "$expected" ] || _fail "exit code $rc instead of $expected: $*"
 }
 
 assert_contains() {
   case "$2" in
     *"$1"*) ;;
-    *) _fail "$3 ([$1] absent de [$2])" ;;
+    *) _fail "$3 ([$1] not found in [$2])" ;;
   esac
 }
 

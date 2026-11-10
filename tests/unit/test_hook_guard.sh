@@ -10,8 +10,8 @@ guard() {
   printf '%s' "$rc"
 }
 
-denied() { assert_eq 2 "$(guard "$1" "$2")" "refus attendu : $2 (sur $(git -C "$1" branch --show-current))"; }
-allowed() { assert_eq 0 "$(guard "$1" "$2")" "autorisation attendue : $2 (sur $(git -C "$1" branch --show-current))"; }
+denied() { assert_eq 2 "$(guard "$1" "$2")" "expected denial: $2 (on $(git -C "$1" branch --show-current))"; }
+allowed() { assert_eq 0 "$(guard "$1" "$2")" "expected allow: $2 (on $(git -C "$1" branch --show-current))"; }
 
 repo="$(mk_repo)"
 allowed "$repo" "git commit -m x"
@@ -28,7 +28,7 @@ allowed "$repo" "git log --oneline"
 allowed "$repo" "echo 'git commit'"
 
 err="$(jq -n --arg cwd "$repo" '{cwd: $cwd, tool_input: {command: "git commit -m x"}}' | bash "$HOOK" 2>&1 >/dev/null)"
-assert_contains "main" "$err" "le message nomme la branche protégée"
+assert_contains "main" "$err" "the message names the protected branch"
 
 git -C "$repo" checkout -q -b greenlyt/foo
 allowed "$repo" "git commit -m x"

@@ -4,7 +4,7 @@ set -euo pipefail
 GL_LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)"
 source "$GL_LIB/common.sh"
 
-[ $# -ge 1 ] || { echo "usage: greenlyt <commande> [args]" >&2; exit 2; }
+[ $# -ge 1 ] || { echo "usage: greenlyt <command> [args]" >&2; exit 2; }
 cmd=$1
 shift
 
@@ -15,7 +15,7 @@ case "$cmd" in
 esac
 
 if [ ! -f "$GL_LIB/cmd_$file.sh" ]; then
-  echo "greenlyt: commande inconnue : $cmd" >&2
+  echo "greenlyt: unknown command: $cmd" >&2
   exit 2
 fi
 

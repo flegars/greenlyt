@@ -8,7 +8,7 @@ gl_render() {
   local template=$1 run_id=$2 extra=${3:-'{}'}
   jq -n -r --rawfile tpl "$template" --slurpfile s "$(gl_state_file "$run_id")" \
     --arg date "$(date '+%Y-%m-%d %H:%M')" --argjson extra "$extra" '
-    def bullets(f): if length == 0 then "_Aucune._" else map("- " + f) | join("\n") end;
+    def bullets(f): if length == 0 then "_None._" else map("- " + f) | join("\n") end;
     $s[0] as $st
     | ($st.verdict // {objections: [], deviations: [], specIssues: []}) as $v
     | {
@@ -16,12 +16,12 @@ gl_render() {
         baseBranch: $st.baseBranch, attempt: ($st.attempt | tostring),
         maxAttempts: ($st.maxAttempts | tostring), date: $date,
         exitCode: ($st.tests.exitCode | tostring), testsTail: $st.tests.tail,
-        history: (if ($st.history | length) == 0 then "_Aucun tour._" else
-          (["| Tour | Tests | Relecteur | Objections | Libertés |", "|---|---|---|---|---|"]
-           + ($st.history | map("| \(.attempt) | \(if .exitCode == 0 then "verts" else "rouges (\(.exitCode))" end) | \(if .approved then "approuvé" else "refusé" end) | \(.objections) | \(.deviations) |"))
+        history: (if ($st.history | length) == 0 then "_No rounds._" else
+          (["| Round | Tests | Reviewer | Objections | Deviations |", "|---|---|---|---|---|"]
+           + ($st.history | map("| \(.attempt) | \(if .exitCode == 0 then "green" else "red (\(.exitCode))" end) | \(if .approved then "approved" else "rejected" end) | \(.objections) | \(.deviations) |"))
           | join("\n")) end),
         objections: ($v.objections | bullets("**\(.ref)** : \(.detail)")),
-        deviations: ($v.deviations | bullets("\(.description) — fichiers : \(.files | join(", ")) — justification : \(.rationale)")),
+        deviations: ($v.deviations | bullets("\(.description) — files: \(.files | join(", ")) — rationale: \(.rationale)")),
         specIssues: ($v.specIssues | bullets("\(.question) _(\(.why))_"))
       } + $extra
     | to_entries
@@ -29,7 +29,7 @@ gl_render() {
 }
 
 cmd_report() {
-  [ $# -ge 2 ] || gl_die "usage: greenlyt report <run-id> success|failure|pr [fichier-ac]"
+  [ $# -ge 2 ] || gl_die "usage: greenlyt report <run-id> success|failure|pr [acceptance-file]"
   local run_id=$1 kind=$2 dir path
   case "$kind" in
     success|failure)
@@ -39,12 +39,12 @@ cmd_report() {
       gl_render "$GL_TEMPLATES/report-$kind.md" "$run_id" > "$(gl_root)/$path"
       ;;
     pr)
-      [ $# -eq 3 ] && [ -f "$3" ] || gl_die "usage: greenlyt report <run-id> pr <fichier-ac>"
+      [ $# -eq 3 ] && [ -f "$3" ] || gl_die "usage: greenlyt report <run-id> pr <acceptance-file>"
       path=".greenlyt/state/$run_id.pr-body.md"
       gl_render "$GL_TEMPLATES/pr.md" "$run_id" "$(jq -n --rawfile a "$3" '{acceptance: ($a | rtrimstr("\n"))}')" \
         > "$(gl_root)/$path"
       ;;
-    *) gl_die "type de rapport inconnu : $kind" ;;
+    *) gl_die "unknown report type: $kind" ;;
   esac
   printf '%s\n' "$path"
 }

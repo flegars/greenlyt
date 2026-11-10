@@ -1,34 +1,34 @@
-# Addition corrigée
+# Fixed addition
 
-Statut : validée
+Status: approved
 
-## Contexte
+## Context
 
-La calculatrice du projet expose l'addition.
+The project's calculator provides addition.
 
-## Objectif
+## Goal
 
-Faire évoluer le résultat de l'addition.
+Change the result of addition.
 
-## Périmètre
+## Scope
 
-### Inclus
+### In scope
 
-- La fonction `add` (JS) ou la méthode `Calculator::add` (PHP).
+- The `add` function (JS) or the `Calculator::add` method (PHP).
 
-### Exclu
+### Out of scope
 
-- Toute autre fonction.
+- Any other function.
 
-## Critères d'acceptation
+## Acceptance criteria
 
-- **AC-1** — Étant donnés 2 et 2, quand on les additionne, alors le résultat est 4.
-- **AC-2** — Étant donnés 2 et 2, quand on les additionne, alors le résultat est 5.
+- **AC-1**: Given 2 and 2, when they are added, then the result is 4.
+- **AC-2**: Given 2 and 2, when they are added, then the result is 5.
 
-## Contraintes
+## Constraints
 
-- Les deux critères doivent être prouvés par des tests qui passent.
+- Both criteria must be proven by passing tests.
 
-## Questions ouvertes
+## Open questions
 
-- Aucune.
+- None.

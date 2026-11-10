@@ -2,21 +2,21 @@
 
 `{{spec}}`
 
-## Critères d'acceptation → preuves
+## Acceptance criteria → evidence
 
 {{acceptance}}
 
-## Tours
+## Rounds
 
 {{history}}
 
-## Verdict du relecteur
+## Reviewer verdict
 
-Approuvé au tour {{attempt}} / {{maxAttempts}}, tests verts.
+Approved in round {{attempt}} / {{maxAttempts}}, tests green.
 
-## Libertés prises hors spec (acceptées)
+## Deviations from the spec (accepted)
 
 {{deviations}}
 
 ---
-PR ouverte en draft par greenlyt — run `{{runId}}`.
+Draft pull request opened by greenlyt: run `{{runId}}`.

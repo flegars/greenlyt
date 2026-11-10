@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Usage : tests/e2e/run.sh <js|php-phpunit> <success|budget>
-# Consomme de vrais appels au modèle : lancé à la main ou en nightly, jamais à chaque push.
+# Usage: tests/e2e/run.sh <js|php-phpunit> <success|budget>
+# Makes real model calls: run manually or nightly, never on every push.
 set -euo pipefail
 
-fixture=${1:?fixture attendue (js|php-phpunit)}
-scenario=${2:?scénario attendu (success|budget)}
+fixture=${1:?fixture expected (js|php-phpunit)}
+scenario=${2:?scenario expected (success|budget)}
 root="$(cd "$(dirname "$0")/../.." && pwd)"
-[ -d "$root/tests/fixtures/$fixture" ] || { echo "fixture inconnue : $fixture" >&2; exit 2; }
-[ -f "$root/tests/e2e/scenario_$scenario.sh" ] || { echo "scénario inconnu : $scenario" >&2; exit 2; }
+[ -d "$root/tests/fixtures/$fixture" ] || { echo "unknown fixture: $fixture" >&2; exit 2; }
+[ -f "$root/tests/e2e/scenario_$scenario.sh" ] || { echo "unknown scenario: $scenario" >&2; exit 2; }
 
 prepare() {
   local work remote
@@ -37,7 +37,7 @@ prepare() {
 attempt_once() {
   local work remote
   read -r work remote <<< "$(prepare)"
-  echo "e2e: $fixture/$scenario dans $work (remote $remote)"
+  echo "e2e: $fixture/$scenario in $work (remote $remote)"
   (
     cd "$work"
     GREENLYT_FORGE_DRY_RUN=1 claude -p "/greenlyt:run $scenario" \
@@ -53,10 +53,10 @@ if attempt_once; then
   exit 0
 fi
 
-# Le modèle n'est pas déterministe : le scénario succès a droit à un second essai.
+# The model is not deterministic: the success scenario gets a second try.
 if [ "$scenario" = success ]; then
-  echo "e2e: premier essai en échec, nouvel essai" >&2
-  attempt_once && { echo "e2e: $fixture/$scenario OK (2e essai)"; exit 0; }
+  echo "e2e: first try failed, retrying" >&2
+  attempt_once && { echo "e2e: $fixture/$scenario OK (2nd try)"; exit 0; }
 fi
-echo "e2e: $fixture/$scenario EN ÉCHEC" >&2
+echo "e2e: $fixture/$scenario FAILED" >&2
 exit 1

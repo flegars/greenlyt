@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Toute erreur interne doit laisser Claude s'arrêter : jamais de set -e ici.
+# Any internal error must let Claude stop: never set -e here.
 set -u
 
 GL_LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)"
@@ -17,7 +17,7 @@ gl_has_config || exit 0
 runs="$(gl_running_runs)"
 [ -n "$runs" ] || exit 0
 if [ "$(printf '%s\n' "$runs" | wc -l | tr -d ' ')" -gt 1 ]; then
-  printf 'greenlyt: plusieurs runs en cours, le hook Stop ne bloque pas : %s\n' "$(printf '%s' "$runs" | tr '\n' ' ')" >&2
+  printf 'greenlyt: several runs in progress, Stop hook does not block: %s\n' "$(printf '%s' "$runs" | tr '\n' ' ')" >&2
   exit 0
 fi
 run_id=$runs
@@ -35,10 +35,10 @@ last="$(gl_state_get "$run_id" .lastBlockedAttempt)" || exit 0
 
 if [ "$active" = "true" ] && [ "$attempt" = "$last" ]; then
   gl_state_update "$run_id" '.status = "stalled"'
-  printf 'greenlyt: run %s bloqué sans progrès, marqué stalled\n' "$run_id" >&2
+  printf 'greenlyt: run %s blocked without progress, marked stalled\n' "$run_id" >&2
   exit 0
 fi
 
 gl_state_update "$run_id" '.lastBlockedAttempt = .attempt' || exit 0
-jq -n --arg reason "Run greenlyt $run_id en cours (tour $attempt/$max) : poursuis le skill run au point où tu t'es arrêté." \
+jq -n --arg reason "greenlyt run $run_id in progress (round $attempt/$max): continue the run skill where you left off." \
   '{decision: "block", reason: $reason}'

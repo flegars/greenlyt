@@ -9,11 +9,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Cohérence tag, manifestes et CHANGELOG
+      - name: Check tag, manifests and CHANGELOG consistency
         run: |
           tag="${GITHUB_REF_NAME#v}"
           plugin="$(jq -r .version .claude-plugin/plugin.json)"
           market="$(jq -r '.plugins[] | select(.name == "greenlyt") | .version' .claude-plugin/marketplace.json)"
           echo "tag=$tag plugin.json=$plugin marketplace.json=$market"
-          [ "$tag" = "$plugin" ] && [ "$tag" = "$market" ] || { echo "versions incohérentes" >&2; exit 1; }
-          grep -q "^## \[$tag\]" CHANGELOG.md || { echo "section ## [$tag] absente du CHANGELOG" >&2; exit 1; }
+          [ "$tag" = "$plugin" ] && [ "$tag" = "$market" ] || { echo "inconsistent versions" >&2; exit 1; }
+          grep -q "^## \[$tag\]" CHANGELOG.md || { echo "section ## [$tag] missing from CHANGELOG" >&2; exit 1; }

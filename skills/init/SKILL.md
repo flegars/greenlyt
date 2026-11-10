@@ -1,60 +1,60 @@
 ---
 name: init
-description: Initialise greenlyt dans le projet courant en créant .greenlyt/config.json (commande de test, forge GitHub ou Azure DevOps, branches protégées, plafond de tentatives, dossier de docs). À lancer une fois par projet, avant /greenlyt:spec et /greenlyt:run. Déclencher sur /greenlyt:init, « initialise greenlyt », « configure greenlyt pour ce projet ».
-argument-hint: "(aucun argument)"
+description: Sets up greenlyt in the current project by creating .greenlyt/config.json (test command, GitHub or Azure DevOps forge, protected branches, attempt cap, docs folder). Run once per project, before /greenlyt:spec and /greenlyt:run. Trigger on /greenlyt:init, "set up greenlyt", "configure greenlyt for this project".
+argument-hint: "(no arguments)"
 ---
 
 # /greenlyt:init
 
-Crée la configuration greenlyt du projet courant. Rien n'est écrit avant que l'utilisateur ait validé la proposition.
+Creates the greenlyt configuration for the current project. Nothing is written before the user approves the proposal.
 
-## 1. Préconditions
+## 1. Preconditions
 
-- Le répertoire courant est dans un repo git (`git rev-parse --show-toplevel`). Sinon, arrête-toi et dis-le.
-- Si `.greenlyt/config.json` existe déjà, affiche-le et demande si l'utilisateur veut le modifier ou s'arrêter là.
+- The current directory is inside a git repository (`git rev-parse --show-toplevel`). Otherwise, stop and say so.
+- If `.greenlyt/config.json` already exists, show it and ask whether the user wants to change it or stop there.
 
-## 2. Détection
+## 2. Detection
 
-Depuis la racine du repo :
+From the repository root:
 
-| Indice | Proposition de `testCommand` |
+| Hint | Proposed `testCommand` |
 |---|---|
-| `composer.json` + `vendor/bin/phpunit` ou `phpunit.xml(.dist)` | `vendor/bin/phpunit` |
-| `package.json` avec un script `test` | `npm test` (ou `pnpm test` / `yarn test` selon le lockfile présent) |
-| Autre | demande à l'utilisateur |
+| `composer.json` + `vendor/bin/phpunit` or `phpunit.xml(.dist)` | `vendor/bin/phpunit` |
+| `package.json` with a `test` script | `npm test` (or `pnpm test` / `yarn test` depending on the lockfile) |
+| Anything else | ask the user |
 
-Forge, depuis `git remote get-url origin` :
+Forge, from `git remote get-url origin`:
 
 - `github.com` → `{"type": "github"}`
-- `dev.azure.com/<org>/<project>/_git/<repo>` ou `<org>.visualstudio.com/<project>/_git/<repo>` → `{"type": "azure-devops", "organization": "https://dev.azure.com/<org>", "project": "<project>", "repository": "<repo>"}`
-- Autre ou pas de remote → demande à l'utilisateur.
+- `dev.azure.com/<org>/<project>/_git/<repo>` or `<org>.visualstudio.com/<project>/_git/<repo>` → `{"type": "azure-devops", "organization": "https://dev.azure.com/<org>", "project": "<project>", "repository": "<repo>"}`
+- Anything else, or no remote → ask the user.
 
-`baseBranch` : la branche par défaut du remote (`git symbolic-ref refs/remotes/origin/HEAD`), sinon `main`.
+`baseBranch`: the remote's default branch (`git symbolic-ref refs/remotes/origin/HEAD`), otherwise `main`.
 
-## 3. Proposition
+## 3. Proposal
 
-Présente la config complète, valeurs par défaut comprises :
+Show the full config, defaults included:
 
 ```json
 {
   "docsDir": "docs/greenlyt",
-  "testCommand": "<détecté>",
+  "testCommand": "<detected>",
   "maxAttempts": 5,
   "protectedBranches": ["main", "master", "develop"],
   "branchPrefix": "greenlyt/",
   "deviations": "ask",
-  "forge": { "type": "<détecté>", "remote": "origin", "baseBranch": "<détecté>" }
+  "forge": { "type": "<detected>", "remote": "origin", "baseBranch": "<detected>" }
 }
 ```
 
-Explique en une ligne chacune des valeurs que l'utilisateur pourrait vouloir changer : `docsDir`, `maxAttempts`, `deviations` (`ask` = s'arrêter pour faire trancher les libertés, `report` = seulement les lister dans la PR). Demande validation.
+Explain in one line each value the user may want to change: `docsDir`, `maxAttempts`, `deviations` (`ask` = stop and let the user decide on deviations, `report` = only list them in the pull request). Ask for approval.
 
-## 4. Écriture
+## 4. Writing
 
-Après accord explicite :
+After explicit approval:
 
-1. Écris `.greenlyt/config.json`.
-2. Ajoute `.greenlyt/state/` au `.gitignore` du projet s'il n'y est pas.
-3. Vérifie que la commande de test passe : `bash -c "<testCommand>"`. Si elle échoue, préviens que `/greenlyt:run` refusera de démarrer tant qu'elle n'est pas verte.
-4. Rappelle de commiter `.greenlyt/config.json` et `.gitignore` : `/greenlyt:run` exige un arbre de travail propre.
-5. Indique la suite : `/greenlyt:spec "<besoin>"`.
+1. Write `.greenlyt/config.json`.
+2. Add `.greenlyt/state/` and `.greenlyt/STOP` to the project's `.gitignore` if missing.
+3. Check that the test command passes: `bash -c "<testCommand>"`. If it fails, warn that `/greenlyt:run` will refuse to start until it is green.
+4. Remind the user to commit `.greenlyt/config.json` and `.gitignore` **on the base branch**: `/greenlyt:run` requires a clean working tree and creates its work branch from the base branch.
+5. Point to the next step: `/greenlyt:spec "<need>"`.

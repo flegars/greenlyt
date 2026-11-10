@@ -8,26 +8,26 @@ preflight_fail() {
 }
 
 cmd_preflight() {
-  [ $# -eq 1 ] || gl_die "usage: greenlyt preflight <chemin-de-la-spec>"
+  [ $# -eq 1 ] || gl_die "usage: greenlyt preflight <spec-path>"
   local spec=$1 root slug branch base remote start previous command
-  root="$(gl_root)" || gl_die "pas dans un repo git"
+  root="$(gl_root)" || gl_die "not inside a git repository"
   cd "$root"
 
-  gl_has_config || preflight_fail 10 "config absente : lance /greenlyt:init"
-  [ -n "$(gl_config_get .testCommand)" ] || preflight_fail 10 "testCommand absent de .greenlyt/config.json"
-  gl_killed && preflight_fail 11 "kill switch actif (.greenlyt/STOP ou GREENLYT_DISABLED=1)"
-  [ -f "$spec" ] && grep -Eq '^Statut[[:space:]]*:[[:space:]]*validée[[:space:]]*$' "$spec" \
-    || preflight_fail 12 "la spec $spec n'existe pas ou n'a pas le statut « validée »"
+  gl_has_config || preflight_fail 10 "no config: run /greenlyt:init"
+  [ -n "$(gl_config_get .testCommand)" ] || preflight_fail 10 "testCommand missing from .greenlyt/config.json"
+  gl_killed && preflight_fail 11 "kill switch is on (.greenlyt/STOP or GREENLYT_DISABLED=1)"
+  [ -f "$spec" ] && grep -Eq '^Status[[:space:]]*:[[:space:]]*approved[[:space:]]*$' "$spec" \
+    || preflight_fail 12 "spec $spec does not exist or is not approved (Status: approved)"
   [ -z "$(git status --porcelain --untracked-files=all -- . ':(exclude).greenlyt' ":(exclude)$spec")" ] \
-    || preflight_fail 13 "l'arbre de travail contient des modifications non commitées"
-  [ -z "$(gl_running_runs)" ] || preflight_fail 14 "un run est déjà en cours : $(gl_running_runs | tr '\n' ' ')"
+    || preflight_fail 13 "the working tree has uncommitted changes"
+  [ -z "$(gl_running_runs)" ] || preflight_fail 14 "a run is already in progress: $(gl_running_runs | tr '\n' ' ')"
 
   slug="$(basename "$spec" .md)"
   branch="$(gl_config_get .branchPrefix)$slug"
   base="$(gl_config_get .forge.baseBranch)"
   remote="$(gl_config_get .forge.remote)"
   git rev-parse --verify --quiet "refs/heads/$branch" >/dev/null \
-    && preflight_fail 16 "la branche $branch existe déjà : reprends le run ou supprime-la"
+    && preflight_fail 16 "branch $branch already exists: resume the run or delete the branch"
 
   start="$base"
   if git remote get-url "$remote" >/dev/null 2>&1 && git fetch -q "$remote" "$base" 2>/dev/null; then
@@ -40,7 +40,7 @@ cmd_preflight() {
   if ! bash -c "$command" >/dev/null 2>&1; then
     git checkout -q "$previous"
     git branch -q -D "$branch"
-    preflight_fail 15 "la suite de tests échoue déjà sur $start : répare-la avant de lancer greenlyt"
+    preflight_fail 15 "the test suite already fails on $start: fix it before running greenlyt"
   fi
 
   git add -- "$spec"

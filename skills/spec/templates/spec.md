@@ -1,36 +1,36 @@
-# {{titre}}
+# {{title}}
 
-Statut : brouillon
+Status: draft
 
-## Contexte
+## Context
 
-{{contexte : situation actuelle, ancrée dans le code (fichiers, comportements observés)}}
+{{context: current situation, grounded in the code (files, observed behavior)}}
 
-## Objectif
+## Goal
 
-{{une ou deux phrases : ce qui doit être vrai une fois la spec livrée}}
+{{one or two sentences: what must be true once the spec is delivered}}
 
-## Périmètre
+## Scope
 
-### Inclus
-
-- {{…}}
-
-### Exclu
+### In scope
 
 - {{…}}
 
-## Critères d'acceptation
+### Out of scope
 
-Chaque critère est vérifiable par un test automatisé.
+- {{…}}
 
-- **AC-1** — {{Étant donné … quand … alors …}}
-- **AC-2** — {{…}}
+## Acceptance criteria
 
-## Contraintes
+Each criterion can be verified by an automated test.
 
-- {{conventions du projet, compatibilité, performance, sécurité…}}
+- **AC-1**: {{Given … when … then …}}
+- **AC-2**: {{…}}
 
-## Questions ouvertes
+## Constraints
 
-- {{aucune, ou questions non tranchées — une spec validée n'en contient plus aucune bloquante}}
+- {{project conventions, compatibility, performance, security…}}
+
+## Open questions
+
+- {{none, or unresolved questions; an approved spec has no blocking question left}}

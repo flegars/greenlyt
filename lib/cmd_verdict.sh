@@ -3,13 +3,13 @@
 source "$GL_LIB/state.sh"
 
 cmd_verdict() {
-  [ $# -eq 2 ] || gl_die "usage: greenlyt verdict <run-id> <fichier-json>"
+  [ $# -eq 2 ] || gl_die "usage: greenlyt verdict <run-id> <json-file>"
   local run_id=$1 file=$2
   jq -e '(.approved | type == "boolean")
     and (.objections | type == "array")
     and (.deviations | type == "array")
     and (.specIssues | type == "array")' "$file" >/dev/null 2>&1 \
-    || gl_die "verdict invalide : attendu {approved: bool, objections: [], deviations: [], specIssues: []}"
+    || gl_die "invalid verdict: expected {approved: bool, objections: [], deviations: [], specIssues: []}"
   gl_state_update "$run_id" \
     '.verdict = $v | .history += [{attempt: .attempt, exitCode: .tests.exitCode, approved: $v.approved,
       objections: ($v.objections | length), deviations: ($v.deviations | length)}]' \

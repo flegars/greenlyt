@@ -1,35 +1,35 @@
-# Multiplication dans la calculatrice
+# Multiplication in the calculator
 
-Statut : validée
+Status: approved
 
-## Contexte
+## Context
 
-La calculatrice du projet expose uniquement l'addition.
+The project's calculator only provides addition.
 
-## Objectif
+## Goal
 
-Ajouter la multiplication de deux entiers.
+Add the multiplication of two integers.
 
-## Périmètre
+## Scope
 
-### Inclus
+### In scope
 
-- Une fonction (JS : `multiply(a, b)` exportée par `src/calculator.js`) ou une méthode (PHP : `Calculator::multiply(int $a, int $b): int`) qui multiplie deux entiers.
+- A function (JS: `multiply(a, b)` exported by `src/calculator.js`) or a method (PHP: `Calculator::multiply(int $a, int $b): int`) that multiplies two integers.
 
-### Exclu
+### Out of scope
 
-- Toute autre opération, toute validation d'entrée, toute modification de l'addition.
+- Any other operation, any input validation, any change to addition.
 
-## Critères d'acceptation
+## Acceptance criteria
 
-- **AC-1** — Étant donnés 3 et 4, quand on les multiplie, alors le résultat est 12.
-- **AC-2** — Étant donnés -2 et 5, quand on les multiplie, alors le résultat est -10.
-- **AC-3** — L'addition existante reste inchangée et son test passe toujours.
+- **AC-1**: Given 3 and 4, when they are multiplied, then the result is 12.
+- **AC-2**: Given -2 and 5, when they are multiplied, then the result is -10.
+- **AC-3**: The existing addition is unchanged and its test still passes.
 
-## Contraintes
+## Constraints
 
-- Aucune dépendance supplémentaire.
+- No additional dependency.
 
-## Questions ouvertes
+## Open questions
 
-- Aucune.
+- None.

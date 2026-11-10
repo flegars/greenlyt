@@ -20,7 +20,7 @@ is_protected() {
 }
 
 deny() {
-  printf 'greenlyt: %s — branche protégée « %s ». Travaille sur une branche %s.\n' \
+  printf 'greenlyt: %s blocked: "%s" is a protected branch. Work on a %s branch.\n' \
     "$1" "$2" "$(gl_config_get .branchPrefix)<slug>" >&2
   exit 2
 }
@@ -38,7 +38,7 @@ check_push() {
     ref="${ref#+}"
     ref="${ref##*:}"
     ref="${ref#refs/heads/}"
-    is_protected "$ref" && deny "git push vers $ref" "$ref"
+    is_protected "$ref" && deny "git push to $ref" "$ref"
   done
   return 0
 }

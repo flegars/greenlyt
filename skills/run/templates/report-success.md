@@ -1,20 +1,20 @@
-# Rapport greenlyt — succès
+# greenlyt report: success
 
-- Run : `{{runId}}`
-- Spec : `{{spec}}`
-- Branche : `{{branch}}` → `{{baseBranch}}`
-- Tours utilisés : {{attempt}} / {{maxAttempts}}
-- Date : {{date}}
+- Run: `{{runId}}`
+- Spec: `{{spec}}`
+- Branch: `{{branch}}` → `{{baseBranch}}`
+- Rounds used: {{attempt}} / {{maxAttempts}}
+- Date: {{date}}
 
-## Tours
+## Rounds
 
 {{history}}
 
-## Libertés prises hors spec (acceptées)
+## Deviations from the spec (accepted)
 
 {{deviations}}
 
-## Dernière exécution des tests (code {{exitCode}})
+## Last test run (exit code {{exitCode}})
 
 ```
 {{testsTail}}

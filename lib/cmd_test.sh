@@ -6,7 +6,7 @@ cmd_test() {
   [ $# -eq 1 ] || gl_die "usage: greenlyt test <run-id>"
   local run_id=$1 command out rc=0
   command="$(gl_config_get .testCommand)"
-  [ -n "$command" ] || gl_die "testCommand absent de .greenlyt/config.json"
+  [ -n "$command" ] || gl_die "testCommand missing from .greenlyt/config.json"
   out="$(mktemp)"
   (cd "$(gl_root)" && bash -c "$command") > "$out" 2>&1 || rc=$?
   gl_state_update "$run_id" '.tests = {exitCode: $rc, tail: $tail}' \

@@ -11,4 +11,4 @@ for t in "$dir"/test_*.sh; do
     failed=$((failed + 1))
   fi
 done
-[ "$failed" -eq 0 ] && echo "OK" || { echo "$failed fichier(s) en échec"; exit 1; }
+[ "$failed" -eq 0 ] && echo "OK" || { echo "$failed failing file(s)"; exit 1; }

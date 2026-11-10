@@ -1,32 +1,32 @@
-# Rapport greenlyt — échec
+# greenlyt report: failure
 
-- Run : `{{runId}}`
-- Spec : `{{spec}}`
-- Branche locale : `{{branch}}` (non poussée)
-- Tours tentés : {{attempt}} / {{maxAttempts}}
-- Date : {{date}}
+- Run: `{{runId}}`
+- Spec: `{{spec}}`
+- Local branch: `{{branch}}` (not pushed)
+- Rounds attempted: {{attempt}} / {{maxAttempts}}
+- Date: {{date}}
 
-Aucune PR n'a été ouverte. La branche locale est conservée pour inspection.
+No pull request was opened. The local branch is kept for inspection.
 
-## Tours
+## Rounds
 
 {{history}}
 
-## Objections non résolues
+## Unresolved objections
 
 {{objections}}
 
-## Libertés relevées
+## Deviations found
 
 {{deviations}}
 
-## Questions ouvertes
+## Open questions
 
-Réponds à ces questions pour recentrer la spec (`/greenlyt:spec {{slug}}`), puis relance `/greenlyt:run {{slug}}`.
+Answer these questions to refocus the spec (`/greenlyt:spec {{slug}}`), then run `/greenlyt:run {{slug}}` again.
 
 {{specIssues}}
 
-## Dernière exécution des tests (code {{exitCode}})
+## Last test run (exit code {{exitCode}})
 
 ```
 {{testsTail}}

@@ -1,44 +1,44 @@
 ---
 name: spec
-description: Rédige et stocke la spec d'une évolution avant toute implémentation greenlyt — critères d'acceptation numérotés et vérifiables, périmètre inclus/exclu, ancrage dans la codebase — puis la fait valider par l'utilisateur. Sert aussi à mettre à jour une spec après un échec de /greenlyt:run. Déclencher sur /greenlyt:spec, « rédige la spec greenlyt », « spécifie ce besoin pour greenlyt », « mets à jour la spec <slug> ».
-argument-hint: "\"<besoin en texte libre>\" | <slug existant>"
+description: Writes and stores the spec of a change before any greenlyt implementation (numbered, verifiable acceptance criteria, in/out of scope, grounded in the codebase), then gets it approved by the user. Also updates a spec after a failed /greenlyt:run. Trigger on /greenlyt:spec, "write the greenlyt spec", "spec this need for greenlyt", "update the spec <slug>".
+argument-hint: "\"<need in plain text>\" | <existing slug>"
 ---
 
 # /greenlyt:spec
 
-Produit la spec qui servira de **référence fixe** à la boucle : le développeur l'implémente, le relecteur s'en sert pour juger et pour repérer les libertés. Une spec floue donne une boucle qui ne converge pas : la précision ici est la priorité.
+Produces the spec that will be the loop's **fixed reference**: the developer implements it, the reviewer uses it to judge and to spot deviations. A vague spec makes a loop that never converges: precision here is the priority.
 
-## 1. Préconditions
+## 1. Preconditions
 
-- `.greenlyt/config.json` existe. Sinon, renvoie vers `/greenlyt:init` et arrête-toi.
-- Lis `docsDir` dans la config (par défaut `docs/greenlyt`). Les specs vivent dans `<docsDir>/specs/<slug>.md`.
+- `.greenlyt/config.json` exists. Otherwise, point to `/greenlyt:init` and stop.
+- Read `docsDir` from the config (`"${CLAUDE_PLUGIN_ROOT}/bin/greenlyt" config .docsDir`, default `docs/greenlyt`). Specs live in `<docsDir>/specs/<slug>.md`.
 
 ## 2. Mode
 
-- **Argument = slug d'une spec existante** → mode **mise à jour**. Lis la spec et, s'il existe, le dernier rapport d'échec `<docsDir>/runs/*-<slug>.md` : ses « Questions ouvertes » sont le point de départ.
-- **Sinon** → mode **création**. Propose un slug en kebab-case court (ex. `export-csv-dossiers`) et vérifie qu'il n'existe pas déjà.
+- **Argument = slug of an existing spec** → **update** mode. Read the spec and, if any, the latest failure report `<docsDir>/runs/*-<slug>.md`: its "Open questions" are the starting point.
+- **Otherwise** → **create** mode. Propose a short kebab-case slug (e.g. `csv-export`) and check it does not exist yet.
 
-## 3. Ancrage dans le code
+## 3. Grounding in the code
 
-Avant de rédiger, explore la codebase : où la fonctionnalité s'insère, le comportement actuel, les conventions et les tests existants. Lis le `CLAUDE.md` du repo s'il existe. Ne présume rien que tu n'as pas lu.
+Before writing, explore the codebase: where the feature fits, the current behavior, the conventions and existing tests. Read the repository's `CLAUDE.md` if there is one. Assume nothing you have not read.
 
 ## 4. Clarification
 
-Pose les questions nécessaires pour lever les ambiguïtés, **une à la fois**, en commençant par celle qui change le plus le résultat. En mode mise à jour, commence par les questions ouvertes du rapport d'échec.
+Ask the questions needed to remove ambiguity, **one at a time**, starting with the one that changes the outcome most. In update mode, start with the open questions from the failure report.
 
-## 5. Rédaction
+## 5. Writing
 
-Remplis `templates/spec.md` (dans le dossier de ce skill). Exigences :
+Fill in `templates/spec.md` (in this skill's folder). Requirements:
 
-- Chaque critère est numéroté `AC-n`, formulé de façon **vérifiable par un test automatisé** (entrée, action, résultat observable).
-- Le périmètre **exclu** est explicite : c'est ce qui permet au relecteur de qualifier une liberté.
-- Aucune question ouverte bloquante ne reste à la validation.
-- La ligne `Statut : brouillon` reste telle quelle tant que l'utilisateur n'a pas validé.
+- Each criterion is numbered `AC-n` and phrased so that it **can be verified by an automated test** (input, action, observable result).
+- The **out of scope** section is explicit: it is what lets the reviewer qualify a deviation.
+- No blocking open question remains at approval.
+- The `Status: draft` line stays as is until the user approves.
 
-Écris le fichier `<docsDir>/specs/<slug>.md` et montre-le à l'utilisateur.
+Write `<docsDir>/specs/<slug>.md` and show it to the user.
 
-## 6. Validation
+## 6. Approval
 
-Demande explicitement : « Valides-tu cette spec ? ». Itère sur ses retours. **Seulement** après un accord explicite, remplace la ligne par `Statut : validée`. Ne commite pas : `/greenlyt:run` commite la spec en premier commit de la branche de travail.
+Ask explicitly: "Do you approve this spec?". Iterate on the feedback. **Only** after explicit approval, replace the line with `Status: approved`. Do not commit: `/greenlyt:run` commits the spec as the first commit of the work branch.
 
-Indique la suite : `/greenlyt:run <slug>`.
+Point to the next step: `/greenlyt:run <slug>`.

@@ -13,13 +13,13 @@ cmd_state() {
     next-attempt) state_next_attempt "$1" ;;
     find) state_find "$1" ;;
     rebudget) state_rebudget "$1" ;;
-    *) gl_die "sous-commande state inconnue : $sub" ;;
+    *) gl_die "unknown state subcommand: $sub" ;;
   esac
 }
 
 state_init() {
   local slug=$1 run_id max dir
-  case "$slug" in */*|"") gl_die "slug invalide : $slug" ;; esac
+  case "$slug" in */*|"") gl_die "invalid slug: $slug" ;; esac
   run_id="$(date +%Y%m%d-%H%M%S)-$slug"
   max="$(gl_config_get .maxAttempts)"
   dir="$(gl_state_dir)"
@@ -41,7 +41,7 @@ state_init() {
 state_set_status() {
   case " $GL_STATUSES " in
     *" $2 "*) gl_state_update "$1" '.status = $s' --arg s "$2" ;;
-    *) gl_die "statut invalide : $2 (attendu : $GL_STATUSES)" ;;
+    *) gl_die "invalid status: $2 (expected: $GL_STATUSES)" ;;
   esac
 }
 
@@ -50,7 +50,7 @@ state_next_attempt() {
   attempt="$(gl_state_get "$1" .attempt)"
   max="$(gl_state_get "$1" .maxAttempts)"
   if [ "$attempt" -ge "$max" ]; then
-    printf 'greenlyt: plafond de %s tentatives atteint\n' "$max" >&2
+    printf 'greenlyt: attempt cap of %s reached\n' "$max" >&2
     exit 3
   fi
   gl_state_update "$1" '.attempt += 1'

@@ -1,0 +1,14 @@
+{
+  "name": "greenlyt",
+  "owner": {
+    "name": "flegars"
+  },
+  "plugins": [
+    {
+      "name": "greenlyt",
+      "source": "./",
+      "description": "Spécifier, puis itérer avec un agent développeur et un agent relecteur jusqu'à des tests verts et une relecture validée, et ouvrir une PR draft.",
+      "version": "0.1.0"
+    }
+  ]
+}

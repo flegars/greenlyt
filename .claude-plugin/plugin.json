@@ -1,0 +1,11 @@
+{
+  "name": "greenlyt",
+  "version": "0.1.0",
+  "description": "Spécifier, puis itérer avec un agent développeur et un agent relecteur jusqu'à des tests verts et une relecture validée, et ouvrir une PR draft.",
+  "author": {
+    "name": "Florian Legars"
+  },
+  "repository": "https://github.com/flegars/greenlyt",
+  "license": "MIT",
+  "keywords": ["loop", "tdd", "review", "spec", "pull-request"]
+}

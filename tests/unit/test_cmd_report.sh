@@ -49,6 +49,10 @@ assert_contains "## Non-blocking remarks" "$report" "non-blocking remarks sectio
 assert_contains "(minor, architecture): helper could live in Support" "$report" "minor objection listed as a remark"
 assert_contains "## Refactoring" "$report" "refactoring section"
 assert_contains "Not run." "$report" "refactoring not run yet"
+"$GL_BIN" refactor start "$run_id"
+"$GL_BIN" refactor done "$run_id"
+assert_contains "Nothing worth simplifying" "$(cat "$("$GL_BIN" report "$run_id" success)")" "refactoring without changes"
+jq '.refactor = null' ".greenlyt/state/$run_id.json" > t.json && mv t.json ".greenlyt/state/$run_id.json"
 assert_eq "" "$(printf '%s' "$report" | grep -o '{{[a-zA-Z]*}}')" "no unsubstituted placeholder (success)"
 
 assert_exit 1 "$GL_BIN" report "$run_id" bogus

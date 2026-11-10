@@ -34,7 +34,8 @@ gl_render() {
         refactoring: (if $refactorEnabled != "true" then "Disabled in the config."
           elif $st.refactor == null then "Not run."
           elif $st.refactor.status == "applied" then "Applied after the green round, tests and reviews still green."
-          elif $st.refactor.status == "reverted" then "Attempted, then reverted to the green commit `\($st.refactor.greenCommit[0:7])`: \($st.refactor.reason // "it broke tests or reviews")."
+          elif $st.refactor.status == "unchanged" then "Nothing worth simplifying: the code was left as approved."
+          elif $st.refactor.status == "reverted" then "Attempted, then reverted to the green commit `\($st.refactor.greenCommit[0:7])`: \($st.refactor.reason // "it broke tests or reviews"). The attempt is kept in `git stash list` and the reflog."
           else "In progress." end)
       } + $extra
     | to_entries

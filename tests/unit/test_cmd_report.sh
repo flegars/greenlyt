@@ -65,6 +65,11 @@ assert_contains "## Refactoring" "$body" "refactoring section in the pull reques
 assert_eq "" "$(printf '%s' "$body" | grep -o '{{[a-zA-Z]*}}')" "no unsubstituted placeholder (pull request)"
 assert_exit 1 "$GL_BIN" report "$run_id" pr
 
+"$GL_BIN" refactor start "$run_id"
+"$GL_BIN" verdict "$run_id" "$(review spec)" "$(review architecture)" "$(review security)" "$(review regression)"
+"$GL_BIN" refactor done "$run_id"
+assert_contains "| 1 (refactor) | green |" "$(cat "$("$GL_BIN" report "$run_id" success)")" "refactoring re-review rows are labelled"
+
 write_config "$repo" '{"testCommand":"exit 0","refactor":false}'
 assert_contains "Disabled in the config." "$(cat "$("$GL_BIN" report "$run_id" success)")" "refactoring disabled"
 

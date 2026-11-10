@@ -22,13 +22,13 @@ gl_render() {
           (["| Round | Tests | " + ($reviewers | join(" | ")) + " | Minor | Deviations |",
             "|---|---|" + ($reviewers | map("---|") | join("")) + "---|---|"]
            + ($st.history | map(. as $h
-               | "| \($h.attempt) | \(if $h.exitCode == 0 then "green" else "red (\($h.exitCode))" end) | "
+               | "| \($h.attempt)\(if ($h.phase // "round") == "round" then "" else " (\($h.phase))" end) | \(if $h.exitCode == 0 then "green" else "red (\($h.exitCode))" end) | "
                  + ($reviewers | map(($h.blocking[.] // "-") | tostring) | join(" | "))
                  + " | \($h.minor) | \($h.deviations) |"))
           | join("\n")) end),
         objections: ([$v.objections[] | select(.severity != "minor")] | bullets(objection)),
         remarks: ([$v.objections[] | select(.severity == "minor")] | bullets(objection)),
-        deviations: ($v.deviations | bullets("\(.description) — files: \(.files | join(", ")) — rationale: \(.rationale)")),
+        deviations: ($v.deviations | bullets("\(.description) — files: \((.files // []) | map(tostring) | join(", ")) — rationale: \(.rationale // "none given")")),
         specIssues: ($v.specIssues | bullets("\(.question) _(\(.why))_")),
         tddWarnings: (($st.tddWarnings // []) | bullets(.)),
         refactoring: (if $refactorEnabled != "true" then "Disabled in the config."

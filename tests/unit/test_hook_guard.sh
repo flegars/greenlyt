@@ -39,6 +39,26 @@ denied "$repo" "git push origin main"
 denied "$repo" "git push origin refs/heads/main"
 denied "$repo" "git push -u origin greenlyt/foo:develop"
 denied "$repo" "git status; git push origin HEAD:master"
+denied "$repo" "git push --all origin"
+denied "$repo" "git push --mirror origin"
+denied "$repo" "git push origin 'main'"
+denied "$repo" "git push origin \"main\""
+denied "$repo" "(git push origin main)"
+denied "$repo" "command git push origin main"
+denied "$repo" "env GIT_TRACE=0 git push origin main"
+denied "$repo" "bash -c \"git push origin main\""
+denied "$repo" "sh -c 'git push origin HEAD:main'"
+allowed "$repo" "git push origin HEAD"
+allowed "$repo" "bash -c 'npm test'"
+
+git -C "$repo" checkout -q main
+denied "$repo" "git push origin HEAD"
+other="$(mk_repo)"
+git -C "$other" checkout -q -b feature
+allowed "$repo" "git -C $other commit -m x"
+git -C "$repo" checkout -q greenlyt/foo
+git -C "$other" checkout -q main
+denied "$repo" "git -C $other commit -m x"
 
 repo="$(mk_repo)"
 write_config "$repo" '{"protectedBranches":["release"]}'

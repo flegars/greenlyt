@@ -13,7 +13,9 @@ GL="${CLAUDE_PLUGIN_ROOT}/bin/greenlyt"
 S=".greenlyt/state"
 ```
 
-**The run happens where you are.** Every command, agent and git operation runs in the current working directory: the worktree Claude was started in (Orca, `claude --worktree`…) or the repository itself. Never `cd`, `git -C` or copy files into another clone or worktree of the repository, even if the run looks easier to do there.
+**The run happens where you are.** Every command, agent and git operation runs in the current working directory: the worktree Claude was started in (Orca, `claude --worktree`…) or the repository itself. Never `cd`, `git -C` or copy files into another clone or worktree of the repository, even if the run looks easier to do there. When the tests cannot run on this directory as configured, section 0 mounts a disposable test environment for it instead.
+
+**Tests always go through the CLI**: `"$GL" test <run_id>` for the loop, and `"$GL" env run-tests` for the agents. Whenever an agent below is told to run the test suite, give it this exact command line, with `$GL` expanded to its absolute path.
 
 ## Agents
 
@@ -26,10 +28,23 @@ S=".greenlyt/state"
 | `greenlyt:security-reviewer` | Injection, secrets, authz, validation, dependencies | nothing |
 | `greenlyt:regression-reviewer` | Existing tests, public contracts, out-of-scope behavior | nothing |
 | `greenlyt:refactorer` | Simplifies the change once it is approved | production code |
+| `greenlyt:env-scout` | Works out how to run the tests on this worktree (section 0) | nothing |
 
 The reviewers to run are those listed in `"$GL" config .reviewers` (default: `spec`, `architecture`, `security`, `regression`). Reviewer `<name>` is the agent `greenlyt:<name>-reviewer`.
 
-A `Stop` hook keeps you from stopping while the run is `running`. **Kill switch**: before every step below, run `"$GL" killed`. If it exits 0, run `"$GL" state set-status <run_id> aborted` and hand back immediately.
+A `Stop` hook keeps you from stopping while the run is `running`. **Kill switch**: before every step below, run `"$GL" killed`. If it exits 0, run `"$GL" state set-status <run_id> aborted`, then `"$GL" env down`, and hand back immediately.
+
+## 0. Test environment
+
+Runs before section 1, for a new run and for a resumed one.
+
+1. `"$GL" env show` prints the recipe remembered for this repository (shared by all its worktrees). If there is one, announce it in one line (`summary`, `savedAt`) and go to 0.3.
+2. Otherwise start `greenlyt:env-scout` with the `testCommand` (`"$GL" config .testCommand`). Extract its JSON block and write it to `$S/env-recipe.json`.
+   - `"needed": false` → `"$GL" env save $S/env-recipe.json`, say in one line that the tests run as configured, then 0.3.
+   - `"needed": true` → show the user the `summary`, the `evidence`, the three commands (`setup`, `testCommand`, `teardown`), what it `creates`, the `disk` usage, the `prerequisites` and the `limits`. Ask with `AskUserQuestion`: **mount it** (and remember it for the next runs), **adjust it** (take their corrections into `$S/env-recipe.json`, then ask again), or **cancel** (stop, no run). On approval, `"$GL" env save $S/env-recipe.json`. Exit code 2 means the recipe is invalid: have the scout fix it with the CLI's message.
+3. `"$GL" env up` mounts the environment (does nothing if it is already mounted or not needed). On failure (exit 3), the CLI has already run the teardown: show the output, offer `"$GL" env forget` so that the next `/greenlyt:run` scouts again, and stop.
+
+From now on the environment stays mounted until the run hands back to the user. **Every time the run hands back to the user** (preflight failure, kill switch, success, failure, waiting for a decision, any stop) run `"$GL" env down` first, so nothing mounted for the tests is left on the machine. Exit code 4 means the teardown failed: show its output and tell the user what may still be mounted. The `Stop` hook also runs `env down` once no run is in progress, as a safety net.
 
 ## 1. Start
 
@@ -43,7 +58,7 @@ The argument is the slug. The spec is `<docsDir>/specs/<slug>.md`, where `docsDi
      - otherwise → section 2 (Loop).
    - **`waiting`**: go straight to step 3.3 (decision on deviations).
    - **`failed`**: check that the spec has `Status: approved`, otherwise point to `/greenlyt:spec <slug>` and stop. If the spec changed, commit it (`git add <spec> && git commit -m "docs(greenlyt): update spec <slug>"`). Then `"$GL" state rebudget <run_id>` and go to section 2 (Loop).
-2. Otherwise, `run_id=$("$GL" preflight <docsDir>/specs/<slug>.md)`. On failure, explain the code to the user and stop:
+2. Otherwise, `run_id=$("$GL" preflight <docsDir>/specs/<slug>.md)`. On failure, `"$GL" env down`, explain the code to the user and stop:
 
 | Code | Meaning |
 |---|---|
@@ -102,9 +117,9 @@ Refactoring runs at most once per run and does not consume an attempt. Skip to 3
 Read `"$GL" state get <run_id> .verdict.deviations` and `"$GL" config .deviations`.
 
 - **No deviation**, or `deviations` is `report` → 3.4.
-- Otherwise (`ask`): `"$GL" state set-status <run_id> waiting`, then present each deviation (description, files, rationale) and ask the user with `AskUserQuestion`: **accept** all deviations, or **fix** (say which ones to remove).
+- Otherwise (`ask`): `"$GL" state set-status <run_id> waiting`, `"$GL" env down`, then present each deviation (description, files, rationale) and ask the user with `AskUserQuestion`: **accept** all deviations, or **fix** (say which ones to remove).
   - **Accept** → `"$GL" state set-status <run_id> running`, then 3.4.
-  - **Fix**: if `attempt < maxAttempts` → `"$GL" state set-status <run_id> running` and back to 2.1, passing these deviations to the developer as to be removed. Otherwise → step 4 (the run fails: never a pull request with a rejected deviation).
+  - **Fix**: if `attempt < maxAttempts` → `"$GL" state set-status <run_id> running`, `"$GL" env up` and back to 2.1, passing these deviations to the developer as to be removed. Otherwise → step 4 (the run fails: never a pull request with a rejected deviation).
 
 ### 3.4 Report and pull request
 
@@ -113,12 +128,12 @@ Read `"$GL" state get <run_id> .verdict.deviations` and `"$GL" config .deviation
 2. Write to `$S/<run_id>.acceptance.md` the Markdown **AC → evidence** table (one row per criterion of the spec: `| AC-n | test(s) | file(s) |`), built from the spec and the test writer's summaries, checked against the diff.
 3. `body=$("$GL" report <run_id> pr $S/<run_id>.acceptance.md)`.
 4. `url=$("$GL" pr <run_id> "$body")`.
-5. `"$GL" state set-status <run_id> succeeded`.
+5. `"$GL" state set-status <run_id> succeeded`, then `"$GL" env down`.
 6. Give the user: the draft pull request URL, the number of rounds, the accepted deviations, the non-blocking remarks, the refactoring outcome, the report path.
 
 ## 4. Failure
 
 1. `report=$("$GL" report <run_id> failure)`. Do not commit it, push nothing.
-2. `"$GL" state set-status <run_id> failed`.
+2. `"$GL" state set-status <run_id> failed`, then `"$GL" env down`.
 3. Show the user: the report path, the tests still red, the unresolved blocking objections per reviewer and **the open questions** (`specIssues`). If there are none, write the questions yourself that would refocus the spec, based on the recurring objections.
 4. Suggest the next step: `/greenlyt:spec <slug>` to update the spec with their answers, then `/greenlyt:run <slug>` to run the loop again with a fresh budget on the same branch.

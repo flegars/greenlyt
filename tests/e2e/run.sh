@@ -40,7 +40,7 @@ attempt_once() {
   echo "e2e: $fixture/$scenario in $work (remote $remote)"
   (
     cd "$work"
-    GREENLYT_FORGE_DRY_RUN=1 claude -p "/greenlyt:run $scenario" \
+    GREENLYT_HOME="$(mktemp -d)" GREENLYT_FORGE_DRY_RUN=1 claude -p "/greenlyt:run $scenario" \
       --plugin-dir "$root" \
       --dangerously-skip-permissions \
       --output-format text > "$work/.e2e-claude.log" 2>&1 || true

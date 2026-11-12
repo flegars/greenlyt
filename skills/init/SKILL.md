@@ -55,6 +55,6 @@ After explicit approval:
 
 1. Write `.greenlyt/config.json`.
 2. Add `.greenlyt/state/` and `.greenlyt/STOP` to the project's `.gitignore` if missing.
-3. Check that the test command passes: `bash -c "<testCommand>"`. If it fails, warn that `/greenlyt:run` will refuse to start until it is green.
+3. Check that the test command passes: `bash -c "<testCommand>"`. If it fails, or if it runs the tests on another clone (a container or pod that does not mount this directory), say that `/greenlyt:run` will propose a disposable test environment for this worktree before the loop, and refuse to start while the tests are red.
 4. Remind the user to commit `.greenlyt/config.json` and `.gitignore` **on the base branch**: `/greenlyt:run` requires a clean working tree and creates its work branch from the base branch.
 5. Point to the next step: `/greenlyt:spec "<need>"`.

@@ -55,6 +55,13 @@ On every round:
 
 The run happens in the directory Claude runs in, never in another clone. Started on a branch that is not protected, typically the own branch of a worktree (Orca, `claude --worktree`…), it works **in place** on that branch. Started on a protected branch (`main`, `develop`…), it creates `<branchPrefix><slug>` from the local base branch, which must then contain the committed `.greenlyt/config.json`. Your `testCommand` must test that same directory.
 
+### Test environment
+
+Before the loop, `/greenlyt:run` makes sure the tests run on **this** worktree's code, on any stack. The `env-scout` agent reads the project's tooling (Makefile, Compose files, Kubernetes manifests, devcontainers…) and what is running (which directory a container or pod really mounts). If `testCommand` tests another clone, for example `kubectl exec` into a pod that mounts the main clone, it proposes a disposable environment for this worktree: a `setup` command, the `testCommand` to run in it and a `teardown` command that removes everything setup created. You approve or adjust it before anything is mounted.
+
+- The recipe is **remembered** per repository in `~/.config/greenlyt/envs/` (or `$GREENLYT_HOME/envs/`) and reused by every worktree: its commands get `$GL_WORKTREE` (the worktree path) and `$GL_ENV_ID` (a name unique to the worktree). `greenlyt env show` prints it, `greenlyt env forget` drops it so the next run scouts again.
+- The environment is mounted once per run and **torn down** every time the run hands back to you (success, failure, waiting for a decision, abort). The `Stop` hook also tears it down once no run is in progress, so nothing is left to fill the disk. `greenlyt env status` and `greenlyt env down` let you check and clean up by hand.
+
 An interrupted run (crash, closed terminal) is resumed by running `/greenlyt:run <slug>` again. To drop it instead:
 
 ```bash

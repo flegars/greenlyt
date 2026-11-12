@@ -16,7 +16,7 @@ preflight_rollback() {
 
 cmd_preflight() {
   [ $# -eq 1 ] || gl_die "usage: greenlyt preflight <spec-path>"
-  local spec=$1 root slug branch base remote start previous command
+  local spec=$1 root slug branch base remote start previous
   root="$(gl_root)" || gl_die "not inside a git repository"
   cd "$root"
 
@@ -61,8 +61,7 @@ cmd_preflight() {
     preflight_fail 17 "the config or the spec is missing from $start: commit .greenlyt/config.json on $base"
   fi
 
-  command="$(gl_config_get .testCommand)"
-  if ! bash -c "$command" >/dev/null 2>&1; then
+  if ! gl_run_shell "$(gl_test_command)" >/dev/null 2>&1; then
     preflight_rollback "$previous" "$branch"
     preflight_fail 15 "the test suite already fails on $start: fix it before running greenlyt"
   fi

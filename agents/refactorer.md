@@ -28,7 +28,7 @@ If nothing is worth changing, change nothing and say so: that is a valid outcome
 
 ## Before handing back
 
-Run the test suite with the `testCommand` from `.greenlyt/config.json`. If it is not green, undo your last change until it is. No `git` command that writes.
+Run the test suite with the test command line the loop gives you. If it is not green, undo your last change until it is. No `git` command that writes.
 
 ## What you return
 

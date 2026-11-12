@@ -14,4 +14,6 @@ assert_eq true "$( [ -n "$request" ] && jq -r .draft "$request")" "draft pull re
 assert_eq "$(git -C "$remote" rev-list --count main)" 1 "no commit added to main on the remote"
 assert_exit 0 git -C "$remote" rev-parse --verify --quiet feat/success
 
+assert_exit 1 test -f .greenlyt/state/env.lock
+
 finish || { echo "log: $work/.e2e-claude.log" >&2; exit 1; }

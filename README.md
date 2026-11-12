@@ -46,7 +46,7 @@ On every round:
 2. the `implementer` makes them pass, taking the previous round's blocking objections into account;
 3. the CLI checks that no locked test and no greenlyt config was changed (a change is a critical objection) and **actually runs** the test command (`testCommand`): its exit code is the only one that counts;
 4. the four reviewers run **in parallel** and each returns a JSON verdict; the CLI merges them and approves the round only if the tests are green, every expected reviewer answered and no `critical` or `major` objection is left;
-5. the round is committed on the work branch `greenlyt/<slug>`.
+5. the round is committed on the work branch `feat/<slug>`.
 
 - **Success**: the `refactorer` simplifies the code once, then tests and reviewers run again. If anything breaks, the CLI reverts to the green commit (leftovers are stashed, never deleted) and the green version is kept. Any deviations are then submitted to you (accept or fix), the branch is pushed and a **draft pull request** is opened. Its description contains the spec, the AC → evidence table, the rounds per reviewer, the accepted deviations, the non-blocking remarks and the refactoring outcome.
 - **Budget exhausted**: no push, no pull request. A failure report lists the red tests, the unresolved objections per reviewer and **open questions** to refocus the spec. Update the spec with `/greenlyt:spec <slug>`, then run `/greenlyt:run <slug>` again: the run resumes on the same branch with a fresh budget.
@@ -67,7 +67,7 @@ An interrupted run (crash, closed terminal) is resumed by running `/greenlyt:run
 | `testCommand` | (required) | Test command, run with `bash -c` at the repository root |
 | `maxAttempts` | `5` | Cap on rounds per run (deviation fixes included) |
 | `protectedBranches` | `["main","master","develop"]` | Branches on which commit, push, `reset --hard` and rebase are blocked |
-| `branchPrefix` | `greenlyt/` | Prefix of the work branch |
+| `branchPrefix` | `feat/` | Prefix of the work branch |
 | `deviations` | `ask` | `ask`: stop and let you decide on deviations; `report`: only list them in the pull request |
 | `reviewers` | `["spec","architecture","security","regression"]` | Reviewers that must approve every round; remove one to skip it |
 | `refactor` | `true` | Run the refactoring agent once the change is approved |

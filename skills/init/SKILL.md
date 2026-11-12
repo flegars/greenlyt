@@ -41,7 +41,7 @@ Show the full config, defaults included:
   "testCommand": "<detected>",
   "maxAttempts": 5,
   "protectedBranches": ["main", "master", "develop"],
-  "branchPrefix": "greenlyt/",
+  "branchPrefix": "feat/",
   "deviations": "ask",
   "forge": { "type": "<detected>", "remote": "origin", "baseBranch": "<detected>" }
 }

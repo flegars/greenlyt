@@ -100,7 +100,7 @@ assert_eq retry "$("$GL_BIN" decide "$run_id")" "red with budget left: retry"
 "$GL_BIN" state next-attempt "$run_id" >/dev/null
 assert_eq exhausted "$("$GL_BIN" decide "$run_id")" "red with no budget: exhausted"
 
-git checkout -q -b greenlyt/verdict
+git checkout -q -b feat/verdict
 echo change > file.txt
 mkdir -p docs/greenlyt/runs && echo report > docs/greenlyt/runs/failure.md
 "$GL_BIN" test "$run_id" >/dev/null || true

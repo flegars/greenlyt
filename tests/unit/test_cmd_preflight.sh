@@ -49,16 +49,16 @@ rm -rf .greenlyt/state
 write_config "$repo" '{"testCommand":"exit 1"}'
 assert_exit 15 "$GL_BIN" preflight "$SPEC"
 assert_eq main "$(git branch --show-current)" "failing tests: back on the starting branch"
-assert_exit 1 git rev-parse --verify --quiet greenlyt/export-csv
+assert_exit 1 git rev-parse --verify --quiet feat/export-csv
 write_config "$repo" '{"testCommand":"exit 0"}'
 
-git branch greenlyt/export-csv
+git branch feat/export-csv
 assert_exit 16 "$GL_BIN" preflight "$SPEC"
-git branch -q -D greenlyt/export-csv
+git branch -q -D feat/export-csv
 
 git checkout -q -b other-branch
 run_id="$("$GL_BIN" preflight "$SPEC")"
-assert_eq greenlyt/export-csv "$(git branch --show-current)" "work branch created"
+assert_eq feat/export-csv "$(git branch --show-current)" "work branch created"
 assert_eq "$(git rev-parse main)" "$(git rev-parse HEAD~1)" "branch starts from baseBranch"
 assert_eq "docs(greenlyt): spec export-csv" "$(git log -1 --format=%s)" "spec committed"
 assert_eq "$SPEC" "$(git show --name-only --format= HEAD)" "the commit only contains the spec"
@@ -87,7 +87,7 @@ git add -A && git commit -q -m "config committed but not pushed"
 mkdir -p docs/greenlyt/specs
 printf '# Export\n\nStatus: approved\n' > "$SPEC"
 run_id="$("$GL_BIN" preflight "$SPEC")"
-assert_eq greenlyt/export-csv "$(git branch --show-current)" "unpushed config: work branch created"
+assert_eq feat/export-csv "$(git branch --show-current)" "unpushed config: work branch created"
 assert_eq .greenlyt/config.json "$(git ls-files .greenlyt/config.json)" "unpushed config: config tracked on the work branch"
 assert_eq running "$("$GL_BIN" state get "$run_id" .status)" "unpushed config: run initialized"
 
@@ -101,6 +101,6 @@ mkdir -p docs/greenlyt/specs
 printf '# Export\n\nStatus: approved\n' > "$SPEC"
 assert_exit 17 "$GL_BIN" preflight "$SPEC"
 assert_eq feature "$(git branch --show-current)" "config missing on base: back on the starting branch"
-assert_exit 1 git rev-parse --verify --quiet greenlyt/export-csv
+assert_exit 1 git rev-parse --verify --quiet feat/export-csv
 
 finish

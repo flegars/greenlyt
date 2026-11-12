@@ -4,7 +4,7 @@ GL_DEFAULT_CONFIG='{
   "docsDir": "docs/greenlyt",
   "maxAttempts": 5,
   "protectedBranches": ["main", "master", "develop"],
-  "branchPrefix": "greenlyt/",
+  "branchPrefix": "feat/",
   "deviations": "ask",
   "reviewers": ["spec", "architecture", "security", "regression"],
   "refactor": true,

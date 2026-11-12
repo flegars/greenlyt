@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+### Changed
+
+- Work branches no longer mention greenlyt: the default `branchPrefix` is now `feat/` (`feat/<slug>` instead of `greenlyt/<slug>`). Existing configs that set `branchPrefix` explicitly keep their value.
+
 ## [0.1.0] - 2026-11-10
 
 ### Added

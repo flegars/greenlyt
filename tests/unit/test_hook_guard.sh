@@ -30,14 +30,14 @@ allowed "$repo" "echo 'git commit'"
 err="$(jq -n --arg cwd "$repo" '{cwd: $cwd, tool_input: {command: "git commit -m x"}}' | bash "$HOOK" 2>&1 >/dev/null)"
 assert_contains "main" "$err" "the message names the protected branch"
 
-git -C "$repo" checkout -q -b greenlyt/foo
+git -C "$repo" checkout -q -b feat/foo
 allowed "$repo" "git commit -m x"
-allowed "$repo" "git push -u origin greenlyt/foo"
+allowed "$repo" "git push -u origin feat/foo"
 allowed "$repo" "git push"
 denied "$repo" "git push origin HEAD:main"
 denied "$repo" "git push origin main"
 denied "$repo" "git push origin refs/heads/main"
-denied "$repo" "git push -u origin greenlyt/foo:develop"
+denied "$repo" "git push -u origin feat/foo:develop"
 denied "$repo" "git status; git push origin HEAD:master"
 denied "$repo" "git push --all origin"
 denied "$repo" "git push --mirror origin"
@@ -56,7 +56,7 @@ denied "$repo" "git push origin HEAD"
 other="$(mk_repo)"
 git -C "$other" checkout -q -b feature
 allowed "$repo" "git -C $other commit -m x"
-git -C "$repo" checkout -q greenlyt/foo
+git -C "$repo" checkout -q feat/foo
 git -C "$other" checkout -q main
 denied "$repo" "git -C $other commit -m x"
 

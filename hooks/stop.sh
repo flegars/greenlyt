@@ -6,6 +6,13 @@ GL_LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)"
 source "$GL_LIB/common.sh"
 source "$GL_LIB/state.sh"
 
+# Safety net: once no run is in progress, nothing greenlyt mounted for the tests may outlive the session.
+release_env() {
+  [ -f "$(gl_env_lock)" ] || return 0
+  "$GL_LIB/../bin/greenlyt" env down >/dev/null 2>&1 \
+    || printf 'greenlyt: test environment teardown failed, run "greenlyt env down" by hand\n' >&2
+}
+
 input="$(cat)"
 cwd="$(printf '%s' "$input" | jq -r '.cwd // empty' 2>/dev/null)"
 active="$(printf '%s' "$input" | jq -r '.stop_hook_active // false' 2>/dev/null)"
@@ -16,7 +23,7 @@ gl_root >/dev/null || exit 0
 gl_has_config || exit 0
 
 runs="$(gl_running_runs)"
-[ -n "$runs" ] || exit 0
+[ -n "$runs" ] || { release_env; exit 0; }
 if [ "$(printf '%s\n' "$runs" | wc -l | tr -d ' ')" -gt 1 ]; then
   printf 'greenlyt: several runs in progress, Stop hook does not block: %s\n' "$(printf '%s' "$runs" | tr '\n' ' ')" >&2
   exit 0
@@ -25,6 +32,7 @@ run_id=$runs
 
 if gl_killed; then
   gl_state_update "$run_id" '.status = "aborted"'
+  release_env
   exit 0
 fi
 
@@ -39,6 +47,7 @@ last="$(gl_state_get "$run_id" .lastBlockedAttempt)" || exit 0
 if [ "$active" = "true" ] && [ "$attempt" = "$last" ]; then
   gl_state_update "$run_id" '.status = "stalled"'
   printf 'greenlyt: run %s blocked without progress, marked stalled\n' "$run_id" >&2
+  release_env
   exit 0
 fi
 

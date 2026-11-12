@@ -7,7 +7,7 @@
     "master",
     "develop"
   ],
-  "branchPrefix": "greenlyt/",
+  "branchPrefix": "feat/",
   "deviations": "ask",
   "reviewers": [
     "spec",

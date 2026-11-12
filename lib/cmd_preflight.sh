@@ -9,6 +9,7 @@ preflight_fail() {
 
 preflight_rollback() {
   git reset -q
+  [ "$1" = "$2" ] && return
   git checkout -q "$1"
   git branch -q -D "$2"
 }
@@ -34,19 +35,26 @@ cmd_preflight() {
   [ -z "$(gl_running_runs)" ] || preflight_fail 14 "a run is already in progress: $(gl_running_runs | tr '\n' ' ')"
 
   slug="$(basename "$spec" .md)"
-  branch="$(gl_config_get .branchPrefix)$slug"
   base="$(gl_config_get .forge.baseBranch)"
   remote="$(gl_config_get .forge.remote)"
-  git rev-parse --verify --quiet "refs/heads/$branch" >/dev/null \
-    && preflight_fail 16 "branch $branch already exists: resume the run or delete the branch"
-
-  start="$base"
-  if ! git rev-parse --verify --quiet "refs/heads/$base" >/dev/null; then
-    git fetch -q "$remote" "$base" 2>/dev/null || true
-    start="$remote/$base"
-  fi
   previous="$(git branch --show-current)"
-  git checkout -q -b "$branch" "$start" || preflight_fail 16 "cannot create branch $branch from $start"
+
+  # The worktree Claude runs in (Orca, claude --worktree...) already has its own branch: the run happens there, in place.
+  if [ -n "$previous" ] && ! gl_config_get .protectedBranches '[]' | jq -e --arg b "$previous" 'index($b)' >/dev/null; then
+    branch="$previous"
+    start="$previous"
+  else
+    branch="$(gl_config_get .branchPrefix)$slug"
+    git rev-parse --verify --quiet "refs/heads/$branch" >/dev/null \
+      && preflight_fail 16 "branch $branch already exists: resume the run or delete the branch"
+
+    start="$base"
+    if ! git rev-parse --verify --quiet "refs/heads/$base" >/dev/null; then
+      git fetch -q "$remote" "$base" 2>/dev/null || true
+      start="$remote/$base"
+    fi
+    git checkout -q -b "$branch" "$start" || preflight_fail 16 "cannot create branch $branch from $start"
+  fi
 
   if ! gl_has_config || [ -z "$(gl_config_get .testCommand)" ] || [ ! -f "$spec" ]; then
     preflight_rollback "$previous" "$branch"
@@ -64,5 +72,5 @@ cmd_preflight() {
     gl_die "cannot commit the spec $spec"
   }
   source "$GL_LIB/cmd_state.sh"
-  state_init "$slug"
+  state_init "$slug" "$branch"
 }

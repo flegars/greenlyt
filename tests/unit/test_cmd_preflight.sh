@@ -56,9 +56,9 @@ git branch feat/export-csv
 assert_exit 16 "$GL_BIN" preflight "$SPEC"
 git branch -q -D feat/export-csv
 
-git checkout -q -b other-branch
 run_id="$("$GL_BIN" preflight "$SPEC")"
-assert_eq feat/export-csv "$(git branch --show-current)" "work branch created"
+assert_eq feat/export-csv "$(git branch --show-current)" "protected starting branch: work branch created"
+assert_eq feat/export-csv "$("$GL_BIN" state get "$run_id" .branch)" "protected starting branch: work branch recorded"
 assert_eq "$(git rev-parse main)" "$(git rev-parse HEAD~1)" "branch starts from baseBranch"
 assert_eq "docs(greenlyt): spec export-csv" "$(git log -1 --format=%s)" "spec committed"
 assert_eq "$SPEC" "$(git show --name-only --format= HEAD)" "the commit only contains the spec"
@@ -93,14 +93,53 @@ assert_eq running "$("$GL_BIN" state get "$run_id" .status)" "unpushed config: r
 
 repo="$(mk_repo)"
 cd "$repo"
-git checkout -q -b feature
+git checkout -q -b develop
 write_config "$repo" '{"testCommand":"exit 0"}'
 printf '.greenlyt/state/\n' > .gitignore
-git add -A && git commit -q -m "config only on feature"
+git add -A && git commit -q -m "config only on develop"
 mkdir -p docs/greenlyt/specs
 printf '# Export\n\nStatus: approved\n' > "$SPEC"
 assert_exit 17 "$GL_BIN" preflight "$SPEC"
-assert_eq feature "$(git branch --show-current)" "config missing on base: back on the starting branch"
+assert_eq develop "$(git branch --show-current)" "config missing on base: back on the starting branch"
 assert_exit 1 git rev-parse --verify --quiet feat/export-csv
+
+repo="$(setup_repo)"
+worktree="$(mktemp -d)/wt"
+git -C "$repo" worktree add -q -b orca/afiesca "$worktree"
+cd "$worktree"
+mkdir -p docs/greenlyt/specs
+cp "$repo/$SPEC" "$SPEC"
+start="$(git rev-parse HEAD)"
+run_id="$("$GL_BIN" preflight "$SPEC")"
+assert_eq orca/afiesca "$(git branch --show-current)" "worktree branch: the run stays on the current branch"
+assert_eq orca/afiesca "$("$GL_BIN" state get "$run_id" .branch)" "worktree branch: current branch recorded"
+assert_eq "$start" "$(git rev-parse HEAD~1)" "worktree branch: spec committed on top of the current branch"
+assert_exit 1 git rev-parse --verify --quiet feat/export-csv
+assert_eq main "$(git -C "$repo" branch --show-current)" "worktree branch: the main clone is left alone"
+assert_eq "$start" "$(git -C "$repo" rev-parse HEAD)" "worktree branch: the main clone has no new commit"
+assert_exit 0 test -f "$worktree/.greenlyt/state/$run_id.json"
+
+repo="$(mk_repo)"
+printf '.greenlyt/\n' > "$repo/.gitignore"
+git -C "$repo" add -A && git -C "$repo" commit -q -m "greenlyt ignored"
+worktree="$(mktemp -d)/wt"
+git -C "$repo" worktree add -q -b orca/ignored "$worktree"
+cd "$worktree"
+write_config "$worktree" '{"testCommand":"exit 0"}'
+mkdir -p docs/greenlyt/specs
+printf '# Export\n\nStatus: approved\n' > "$SPEC"
+run_id="$("$GL_BIN" preflight "$SPEC")"
+assert_eq orca/ignored "$(git branch --show-current)" "untracked config: the run stays on the current branch"
+assert_eq running "$("$GL_BIN" state get "$run_id" .status)" "untracked config: run initialized"
+
+repo="$(setup_repo)"
+cd "$repo"
+git checkout -q -b feature
+start="$(git rev-parse HEAD)"
+write_config "$repo" '{"testCommand":"exit 1"}'
+assert_exit 15 "$GL_BIN" preflight "$SPEC"
+assert_eq feature "$(git branch --show-current)" "current branch, failing tests: still on the branch"
+assert_eq "$start" "$(git rev-parse HEAD)" "current branch, failing tests: nothing committed"
+assert_exit 0 git diff --cached --quiet
 
 finish

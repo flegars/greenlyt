@@ -8,6 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ### Changed
 
+- `/greenlyt:run` works in the directory Claude runs in. On a branch that is not protected (typically a worktree's own branch), it runs in place on that branch instead of creating a new one; a `<branchPrefix><slug>` branch is only created when the run starts on a protected branch. The run skill no longer moves the run to another clone.
 - Work branches no longer mention greenlyt: the default `branchPrefix` is now `feat/` (`feat/<slug>` instead of `greenlyt/<slug>`). Existing configs that set `branchPrefix` explicitly keep their value.
 
 ## [0.1.0] - 2026-11-10

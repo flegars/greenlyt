@@ -13,6 +13,8 @@ GL="${CLAUDE_PLUGIN_ROOT}/bin/greenlyt"
 S=".greenlyt/state"
 ```
 
+**The run happens where you are.** Every command, agent and git operation runs in the current working directory: the worktree Claude was started in (Orca, `claude --worktree`…) or the repository itself. Never `cd`, `git -C` or copy files into another clone or worktree of the repository, even if the run looks easier to do there.
+
 ## Agents
 
 | Agent | Role | Writes |
@@ -51,10 +53,10 @@ The argument is the slug. The spec is `<docsDir>/specs/<slug>.md`, where `docsDi
 | 13 | the working tree is not clean → commit or stash |
 | 14 | another run is already in progress → resume it with `/greenlyt:run <its slug>`, or abort it with `"$GL" state set-status <run_id> aborted` |
 | 15 | the test suite already fails on the base branch |
-| 16 | the work branch already exists |
-| 17 | the config or the spec is missing from the base branch → commit `.greenlyt/config.json` on the base branch |
+| 16 | started on a protected branch and the work branch `<branchPrefix><slug>` already exists |
+| 17 | started on a protected branch and the config or the spec is missing from the base branch → commit `.greenlyt/config.json` on the base branch |
 
-Announce the run: run-id, branch, cap, reviewers.
+Preflight runs **in place** on the current branch when it is not protected (typically a worktree's own branch); it creates `<branchPrefix><slug>` from the base branch only when you start on a protected branch. Announce the run: run-id, branch, cap, reviewers.
 
 ## 2. Loop
 

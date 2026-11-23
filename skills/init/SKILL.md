@@ -54,7 +54,7 @@ Explain in one line each value the user may want to change: `docsDir`, `maxAttem
 After explicit approval:
 
 1. Write `.greenlyt/config.json`.
-2. Add `.greenlyt/state/` and `.greenlyt/STOP` to the project's `.gitignore` if missing.
+2. greenlyt is personal tooling: keep everything it writes out of the project's history, and leave no trace of it in the project's files. Add `.greenlyt/` and `<docsDir>/` (the approved value, with a trailing `/`) to the repository's local exclude file, `$(git rev-parse --git-path info/exclude)` (create it if missing; it is shared by every worktree), each one only if `git check-ignore -q <path>` says it is not ignored yet. Never touch the project's `.gitignore`. Never ignore a folder the project already tracks files in (`git ls-files <docsDir>` not empty): say so and ask the user to choose another `docsDir`. Specs and reports then stay on the developer's machine: `/greenlyt:run` does not commit them.
 3. Check that the test command passes: `bash -c "<testCommand>"`. If it fails, or if it runs the tests on another clone (a container or pod that does not mount this directory), say that `/greenlyt:run` will propose a disposable test environment for this worktree before the loop, and refuse to start while the tests are red.
-4. Remind the user to commit `.greenlyt/config.json` and `.gitignore` **on the base branch**: `/greenlyt:run` requires a clean working tree and creates its work branch from the base branch.
+4. Tell the user there is nothing to commit. `.greenlyt/config.json` stays untracked: a new worktree does not get it, copy it there (and the spec) before running `/greenlyt:run` in it.
 5. Point to the next step: `/greenlyt:spec "<need>"`.

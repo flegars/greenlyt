@@ -24,6 +24,8 @@ A Claude Code plugin that takes a need all the way to a **draft pull request rea
 
 Specs and reports are written to `docs/greenlyt/` (configurable with `docsDir`).
 
+greenlyt is personal tooling: `/greenlyt:init` adds `.greenlyt/` and `docsDir` to the repository's local exclude file (`.git/info/exclude`, shared by every worktree), so the config, specs and reports never land in the project's history or in pull requests, and the project's `.gitignore` is left untouched. In a new worktree, copy `.greenlyt/config.json` and the spec before running `/greenlyt:run`.
+
 ## Agents
 
 | Agent | Role | Writes |
@@ -53,7 +55,7 @@ On every round:
 
 `/greenlyt:run` refuses to start if the working tree is not clean, if the spec is not approved, or if the test suite is already red.
 
-The run happens in the directory Claude runs in, never in another clone. Started on a branch that is not protected, typically the own branch of a worktree (Orca, `claude --worktree`…), it works **in place** on that branch. Started on a protected branch (`main`, `develop`…), it creates `<branchPrefix><slug>` from the local base branch, which must then contain the committed `.greenlyt/config.json`. Your `testCommand` must test that same directory.
+The run happens in the directory Claude runs in, never in another clone. Started on a branch that is not protected, typically the own branch of a worktree (Orca, `claude --worktree`…), it works **in place** on that branch. Started on a protected branch (`main`, `develop`…), it creates `<branchPrefix><slug>` from the local base branch, which must then contain `.greenlyt/config.json`, either ignored (the default) or committed. Your `testCommand` must test that same directory.
 
 ### Test environment
 

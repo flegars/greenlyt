@@ -4,7 +4,7 @@ GL_DEFAULT_CONFIG='{
   "docsDir": "docs/greenlyt",
   "maxAttempts": 5,
   "protectedBranches": ["main", "master", "develop"],
-  "branchPrefix": "greenlyt/",
+  "branchPrefix": "feat/",
   "deviations": "ask",
   "reviewers": ["spec", "architecture", "security", "regression"],
   "refactor": true,
@@ -57,4 +57,29 @@ gl_killed() {
   local root
   root="$(gl_root)" || return 1
   [ -f "$root/.greenlyt/STOP" ]
+}
+
+gl_env_lock() {
+  printf '%s/.greenlyt/state/env.lock' "$(gl_root)"
+}
+
+gl_env_id() {
+  printf 'gl-%s' "$(gl_root | git hash-object --stdin | cut -c1-10)"
+}
+
+gl_test_command() {
+  local lock
+  lock="$(gl_env_lock)"
+  if [ -f "$lock" ] && jq -e '.testCommand | type == "string" and length > 0' "$lock" >/dev/null 2>&1; then
+    jq -r .testCommand "$lock"
+  else
+    gl_config_get .testCommand
+  fi
+}
+
+# Environment recipes are shared by every worktree: they get the worktree path and a per-worktree id instead of hard-coded paths and names.
+gl_run_shell() {
+  local root
+  root="$(gl_root)"
+  (cd "$root" && GL_WORKTREE="$root" GL_ENV_ID="$(gl_env_id)" bash -c "$1")
 }

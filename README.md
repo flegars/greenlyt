@@ -46,12 +46,21 @@ On every round:
 2. the `implementer` makes them pass, taking the previous round's blocking objections into account;
 3. the CLI checks that no locked test and no greenlyt config was changed (a change is a critical objection) and **actually runs** the test command (`testCommand`): its exit code is the only one that counts;
 4. the four reviewers run **in parallel** and each returns a JSON verdict; the CLI merges them and approves the round only if the tests are green, every expected reviewer answered and no `critical` or `major` objection is left;
-5. the round is committed on the work branch `greenlyt/<slug>`.
+5. the round is committed on the work branch: the current branch, or `feat/<slug>` if you started on a protected branch (see below).
 
 - **Success**: the `refactorer` simplifies the code once, then tests and reviewers run again. If anything breaks, the CLI reverts to the green commit (leftovers are stashed, never deleted) and the green version is kept. Any deviations are then submitted to you (accept or fix), the branch is pushed and a **draft pull request** is opened. Its description contains the spec, the AC → evidence table, the rounds per reviewer, the accepted deviations, the non-blocking remarks and the refactoring outcome.
 - **Budget exhausted**: no push, no pull request. A failure report lists the red tests, the unresolved objections per reviewer and **open questions** to refocus the spec. Update the spec with `/greenlyt:spec <slug>`, then run `/greenlyt:run <slug>` again: the run resumes on the same branch with a fresh budget.
 
-`/greenlyt:run` refuses to start if the working tree is not clean, if the spec is not approved, or if the test suite is already red on the base branch. The work branch is created from the local base branch, which must contain the committed `.greenlyt/config.json`.
+`/greenlyt:run` refuses to start if the working tree is not clean, if the spec is not approved, or if the test suite is already red.
+
+The run happens in the directory Claude runs in, never in another clone. Started on a branch that is not protected, typically the own branch of a worktree (Orca, `claude --worktree`…), it works **in place** on that branch. Started on a protected branch (`main`, `develop`…), it creates `<branchPrefix><slug>` from the local base branch, which must then contain the committed `.greenlyt/config.json`. Your `testCommand` must test that same directory.
+
+### Test environment
+
+Before the loop, `/greenlyt:run` makes sure the tests run on **this** worktree's code, on any stack. The `env-scout` agent reads the project's tooling (Makefile, Compose files, Kubernetes manifests, devcontainers…) and what is running (which directory a container or pod really mounts). If `testCommand` tests another clone, for example `kubectl exec` into a pod that mounts the main clone, it proposes a disposable environment for this worktree: a `setup` command, the `testCommand` to run in it and a `teardown` command that removes everything setup created. You approve or adjust it before anything is mounted.
+
+- The recipe is **remembered** per repository in `~/.config/greenlyt/envs/` (or `$GREENLYT_HOME/envs/`) and reused by every worktree: its commands get `$GL_WORKTREE` (the worktree path) and `$GL_ENV_ID` (a name unique to the worktree). `greenlyt env show` prints it, `greenlyt env forget` drops it so the next run scouts again.
+- The environment is mounted once per run and **torn down** every time the run hands back to you (success, failure, waiting for a decision, abort). The `Stop` hook also tears it down once no run is in progress, so nothing is left to fill the disk. `greenlyt env status` and `greenlyt env down` let you check and clean up by hand.
 
 An interrupted run (crash, closed terminal) is resumed by running `/greenlyt:run <slug>` again. To drop it instead:
 
@@ -67,7 +76,7 @@ An interrupted run (crash, closed terminal) is resumed by running `/greenlyt:run
 | `testCommand` | (required) | Test command, run with `bash -c` at the repository root |
 | `maxAttempts` | `5` | Cap on rounds per run (deviation fixes included) |
 | `protectedBranches` | `["main","master","develop"]` | Branches on which commit, push, `reset --hard` and rebase are blocked |
-| `branchPrefix` | `greenlyt/` | Prefix of the work branch |
+| `branchPrefix` | `feat/` | Prefix of the work branch created when the run starts on a protected branch |
 | `deviations` | `ask` | `ask`: stop and let you decide on deviations; `report`: only list them in the pull request |
 | `reviewers` | `["spec","architecture","security","regression"]` | Reviewers that must approve every round; remove one to skip it |
 | `refactor` | `true` | Run the refactoring agent once the change is approved |

@@ -19,7 +19,7 @@ cmd_state() {
 }
 
 state_init() {
-  local slug=$1 run_id max dir
+  local slug=$1 branch=${2:-} run_id max dir
   case "$slug" in */*|"") gl_die "invalid slug: $slug" ;; esac
   run_id="$(date +%Y%m%d-%H%M%S)-$slug"
   max="$(gl_config_get .maxAttempts)"
@@ -29,7 +29,7 @@ state_init() {
     --arg runId "$run_id" \
     --arg slug "$slug" \
     --arg spec "$(gl_config_get .docsDir)/specs/$slug.md" \
-    --arg branch "$(gl_config_get .branchPrefix)$slug" \
+    --arg branch "${branch:-$(gl_config_get .branchPrefix)$slug}" \
     --arg base "$(gl_config_get .forge.baseBranch)" \
     --argjson max "$max" \
     --arg configHash "$(git hash-object "$(gl_config_file)" 2>/dev/null)" \

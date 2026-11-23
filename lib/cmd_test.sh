@@ -8,13 +8,13 @@ GL_TAIL_BYTES=65536
 cmd_test() {
   [ $# -eq 1 ] || gl_die "usage: greenlyt test <run-id>"
   local run_id=$1 command out tail_file rc=0
-  command="$(gl_config_get .testCommand)"
+  command="$(gl_test_command)"
   [ -n "$command" ] || gl_die "testCommand missing from .greenlyt/config.json"
   # Reset first: if recording the result fails, no stale green result may survive.
   gl_state_update "$run_id" '.tests = {exitCode: null, tail: ""}'
   out="$(mktemp)"
   tail_file="$(mktemp)"
-  (cd "$(gl_root)" && bash -c "$command") > "$out" 2>&1 || rc=$?
+  gl_run_shell "$command" > "$out" 2>&1 || rc=$?
   tail -n "$GL_TAIL_LINES" "$out" | tail -c "$GL_TAIL_BYTES" > "$tail_file"
   gl_state_update "$run_id" '.tests = {exitCode: $rc, tail: ($tail | rtrimstr("\n"))}' \
     --argjson rc "$rc" --rawfile tail "$tail_file"

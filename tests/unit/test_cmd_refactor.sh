@@ -6,7 +6,7 @@ cd "$repo"
 write_config "$repo" '{"testCommand":"exit 0"}'
 printf '.greenlyt/state/\n' > .gitignore
 git add -A && git commit -q -m base
-git checkout -q -b greenlyt/refacto
+git checkout -q -b feat/refacto
 run_id="$("$GL_BIN" state init refacto)"
 echo "green code" > code.txt
 git add -A && git commit -q -m "green round"
@@ -26,8 +26,8 @@ mkdir -p docs/greenlyt/runs && echo keep > docs/greenlyt/runs/report.md
 
 git checkout -q -b elsewhere
 assert_exit 1 "$GL_BIN" refactor revert "$run_id"
-assert_eq "$(git rev-parse greenlyt/refacto)" "$(git rev-parse HEAD)" "revert refused outside the work branch"
-git checkout -q greenlyt/refacto
+assert_eq "$(git rev-parse feat/refacto)" "$(git rev-parse HEAD)" "revert refused outside the work branch"
+git checkout -q feat/refacto
 
 assert_exit 0 "$GL_BIN" refactor revert "$run_id" "tests went red"
 assert_eq "$green" "$(git rev-parse HEAD)" "revert restores the green commit"

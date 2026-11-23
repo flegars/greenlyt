@@ -14,7 +14,7 @@ assert_exit 0 jq -e . "$state_file"
 assert_eq running "$("$GL_BIN" state get "$run_id" .status)" "initial status"
 assert_eq 0 "$("$GL_BIN" state get "$run_id" .attempt)" "initial attempt"
 assert_eq 2 "$("$GL_BIN" state get "$run_id" .maxAttempts)" "cap taken from config"
-assert_eq greenlyt/ajout-export "$("$GL_BIN" state get "$run_id" .branch)" "work branch"
+assert_eq feat/ajout-export "$("$GL_BIN" state get "$run_id" .branch)" "work branch"
 assert_eq docs/greenlyt/specs/ajout-export.md "$("$GL_BIN" state get "$run_id" .spec)" "spec path"
 assert_eq -1 "$("$GL_BIN" state get "$run_id" .lastBlockedAttempt)" "initial lastBlockedAttempt"
 

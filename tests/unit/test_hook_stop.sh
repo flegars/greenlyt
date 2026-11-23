@@ -113,4 +113,30 @@ run_id="$(new_run "$repo" waiting-run)"
 run_hook "$repo" false
 assert_eq "" "$HOOK_OUT" "waiting run: lets Claude stop"
 
+mount_env() {
+  mkdir -p "$1/.greenlyt/state"
+  jq -n --arg t "touch $2" '{needed: true, id: "gl-test", testCommand: "exit 0", teardown: $t}' > "$1/.greenlyt/state/env.lock"
+}
+
+repo="$(mk_repo)"
+write_config "$repo" '{}'
+marker="$(mktemp -d)/torn-down"
+mount_env "$repo" "$marker"
+run_hook "$repo" false
+assert_eq "" "$HOOK_OUT" "mounted environment, no run: lets Claude stop"
+assert_exit 0 test -f "$marker"
+assert_exit 1 test -f "$repo/.greenlyt/state/env.lock"
+
+repo="$(mk_repo)"
+write_config "$repo" '{"maxAttempts":3}'
+marker="$(mktemp -d)/torn-down"
+mount_env "$repo" "$marker"
+run_id="$(new_run "$repo" busy)"
+run_hook "$repo" false
+assert_contains block "$HOOK_OUT" "mounted environment, running run: still blocks"
+assert_exit 1 test -f "$marker"
+touch "$repo/.greenlyt/STOP"
+run_hook "$repo" false
+assert_exit 0 test -f "$marker"
+
 finish

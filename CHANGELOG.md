@@ -6,6 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+### Added
+
+- `env-scout` agent and `greenlyt env` CLI: before the loop, `/greenlyt:run` works out how to run the tests on the current worktree, on any stack. When `testCommand` tests another clone (for example a pod that mounts the main clone), it proposes a disposable environment (setup, test command, teardown), mounts it after your approval, remembers the recipe per repository for every worktree, and tears it down every time the run hands back to you. The `Stop` hook tears it down once no run is in progress.
+
+### Changed
+
+- `/greenlyt:run` works in the directory Claude runs in. On a branch that is not protected (typically a worktree's own branch), it runs in place on that branch instead of creating a new one; a `<branchPrefix><slug>` branch is only created when the run starts on a protected branch. The run skill no longer moves the run to another clone.
+- Work branches no longer mention greenlyt: the default `branchPrefix` is now `feat/` (`feat/<slug>` instead of `greenlyt/<slug>`). Existing configs that set `branchPrefix` explicitly keep their value.
+
 ## [0.1.0] - 2026-11-10
 
 ### Added

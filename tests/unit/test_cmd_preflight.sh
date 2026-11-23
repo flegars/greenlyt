@@ -132,6 +132,18 @@ run_id="$("$GL_BIN" preflight "$SPEC")"
 assert_eq orca/ignored "$(git branch --show-current)" "untracked config: the run stays on the current branch"
 assert_eq running "$("$GL_BIN" state get "$run_id" .status)" "untracked config: run initialized"
 
+repo="$(mk_repo)"
+cd "$repo"
+printf '.greenlyt/\ndocs/greenlyt/\n' >> "$(git rev-parse --git-path info/exclude)"
+write_config "$repo" '{"testCommand":"exit 0"}'
+mkdir -p docs/greenlyt/specs
+printf '# Export\n\nStatus: approved\n' > "$SPEC"
+start="$(git rev-parse HEAD)"
+run_id="$("$GL_BIN" preflight "$SPEC")"
+assert_eq feat/export-csv "$(git branch --show-current)" "ignored spec: work branch created from the base branch"
+assert_eq "$start" "$(git rev-parse HEAD)" "ignored spec: nothing committed"
+assert_eq running "$("$GL_BIN" state get "$run_id" .status)" "ignored spec: run initialized"
+
 repo="$(setup_repo)"
 cd "$repo"
 git checkout -q -b feature

@@ -39,6 +39,6 @@ Write `<docsDir>/specs/<slug>.md` and show it to the user.
 
 ## 6. Approval
 
-Ask explicitly: "Do you approve this spec?". Iterate on the feedback. **Only** after explicit approval, replace the line with `Status: approved`. Do not commit: `/greenlyt:run` commits the spec as the first commit of the work branch.
+Ask explicitly: "Do you approve this spec?". Iterate on the feedback. **Only** after explicit approval, replace the line with `Status: approved`. Do not commit: `/greenlyt:run` commits the spec as the first commit of the work branch, unless the project ignores it.
 
 Point to the next step: `/greenlyt:run <slug>`.

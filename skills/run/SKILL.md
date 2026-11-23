@@ -57,7 +57,7 @@ The argument is the slug. The spec is `<docsDir>/specs/<slug>.md`, where `docsDi
      - empty, and `"$GL" decide <run_id>` prints `success` → step 3.1 (the last round was approved);
      - otherwise → section 2 (Loop).
    - **`waiting`**: go straight to step 3.3 (decision on deviations).
-   - **`failed`**: check that the spec has `Status: approved`, otherwise point to `/greenlyt:spec <slug>` and stop. If the spec changed, commit it (`git add <spec> && git commit -m "docs(greenlyt): update spec <slug>"`). Then `"$GL" state rebudget <run_id>` and go to section 2 (Loop).
+   - **`failed`**: check that the spec has `Status: approved`, otherwise point to `/greenlyt:spec <slug>` and stop. If the spec changed and is not ignored (`git check-ignore -q <spec>` fails), commit it (`git add <spec> && git commit -m "docs(greenlyt): update spec <slug>"`). Then `"$GL" state rebudget <run_id>` and go to section 2 (Loop).
 2. Otherwise, `run_id=$("$GL" preflight <docsDir>/specs/<slug>.md)`. On failure, `"$GL" env down`, explain the code to the user and stop:
 
 | Code | Meaning |
@@ -124,7 +124,7 @@ Read `"$GL" state get <run_id> .verdict.deviations` and `"$GL" config .deviation
 ### 3.4 Report and pull request
 
 0. **Gate**: `"$GL" decide <run_id>` must print `success`. Otherwise, never open a pull request: go back to section 2 (Loop) if it prints `retry`, or to step 4 if it prints `exhausted`.
-1. `report=$("$GL" report <run_id> success)`, then `git add "$report" && git commit -m "docs(greenlyt): report <run_id>"`.
+1. `report=$("$GL" report <run_id> success)`, then, unless the report is ignored (`git check-ignore -q "$report"` succeeds), `git add "$report" && git commit -m "docs(greenlyt): report <run_id>"`.
 2. Write to `$S/<run_id>.acceptance.md` the Markdown **AC → evidence** table (one row per criterion of the spec: `| AC-n | test(s) | file(s) |`), built from the spec and the test writer's summaries, checked against the diff.
 3. `body=$("$GL" report <run_id> pr $S/<run_id>.acceptance.md)`.
 4. `url=$("$GL" pr <run_id> "$body")`.

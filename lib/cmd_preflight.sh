@@ -66,10 +66,13 @@ cmd_preflight() {
     preflight_fail 15 "the test suite already fails on $start: fix it before running greenlyt"
   fi
 
-  git add -- "$spec" && { git diff --cached --quiet || git commit -q -m "docs(greenlyt): spec $slug"; } || {
-    preflight_rollback "$previous" "$branch"
-    gl_die "cannot commit the spec $spec"
-  }
+  # greenlyt is personal tooling: a spec the project ignores stays on the developer's machine.
+  if ! git check-ignore -q -- "$spec"; then
+    git add -- "$spec" && { git diff --cached --quiet || git commit -q -m "docs(greenlyt): spec $slug"; } || {
+      preflight_rollback "$previous" "$branch"
+      gl_die "cannot commit the spec $spec"
+    }
+  fi
   source "$GL_LIB/cmd_state.sh"
   state_init "$slug" "$branch"
 }
